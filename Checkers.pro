@@ -7,9 +7,11 @@ SOURCES += \
         main.cpp \
     game.cpp \
     alphabeta.cpp \
-    board.cpp
+    board.cpp \
+    painter.cpp
 
 HEADERS += \
     game.hpp \
     alphabeta.hpp \
-    board.hpp
+    board.hpp \
+    painter.hpp

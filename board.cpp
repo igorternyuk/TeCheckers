@@ -4,7 +4,7 @@
 
 Board::Board()
 {
-
+    setupInitialPosition();
 }
 
 void Board::setupInitialPosition()
@@ -14,22 +14,17 @@ void Board::setupInitialPosition()
     {
         for(int x = (y + 1) % 2; x < BOARD_SIZE; x += 2)
         {
-            setCell(Cell::BLACK_CHECKER, {x,y});
+            setCell(Cell::BLUE_CHECKER, {x,y});
         }
     }
 
-    for(int y = 0; y < BOARD_SIZE - NUM_CHECKER_ROW_FOR_ONE_SIDE; ++y)
+    for(int y = BOARD_SIZE - NUM_CHECKER_ROW_FOR_ONE_SIDE; y < BOARD_SIZE; ++y)
     {
         for(int x = (y + 1) % 2; x < BOARD_SIZE; x += 2)
         {
-            setCell(Cell::WHITE_CHECKER, {x,y});
+            setCell(Cell::RED_CHECKER, {x,y});
         }
     }
-}
-
-bool Board::tryToMove(const Move &move)
-{
-    return false;
 }
 
 bool Board::isValidSpot(int x, int y) const
@@ -40,6 +35,11 @@ bool Board::isValidSpot(int x, int y) const
 bool Board::isValidSpot(Spot spot) const
 {
     return isValidSpot(spot.x, spot.y);
+}
+
+bool Board::isCellEmpty(int x, int y) const
+{
+    return getCell(x, y) == Cell::EMPTY;
 }
 
 Board::Cell Board::getCell(int x, int y) const
