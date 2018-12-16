@@ -5,7 +5,7 @@ Game::Game()
 
 }
 
-bool Game::tryToMove(Spot start, Spot end)
+bool Game::tryToMove(int x, int y)
 {
     return false;
 }

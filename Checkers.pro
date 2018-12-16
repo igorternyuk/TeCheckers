@@ -1,4 +1,5 @@
 TEMPLATE = app
+DEFINES += DEBUG
 CONFIG += c++1z
 CONFIG -= app_bundle
 CONFIG -= qt

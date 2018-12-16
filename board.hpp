@@ -3,17 +3,6 @@
 
 #include <vector>
 
-struct Spot
-{
-    int x, y;
-    Spot(int x = 0, int y = 0)
-    {
-        this->x = x;
-        this->y = y;
-    }
-    int distanceTo(Spot spot) const;
-};
-
 class Board
 {
 public:
@@ -21,29 +10,105 @@ public:
     enum
     {
         BOARD_SIZE = 8,
-        NUM_CHECKER_ROW_FOR_ONE_SIDE = 3
+        NUM_CHECKER_ROW_FOR_ONE_SIDE = 3,
+        CHECKER_SCORE = 100,
+        KING_SCORE = 200
     };
 
-    enum Cell
+    enum class Alliance
     {
-        EMPTY,
-        RED_CHECKER,
-        RED_KING,
-        BLUE_CHECKER,
-        BLUE_KING
+        RED,
+        BLUE,
+        NONE
     };
+
+    struct Piece
+    {
+        int x, y;
+        Alliance alliance;
+        bool isKing;
+        int value;
+        Piece(int x = -1, int y = -1, Alliance alliance = Alliance::NONE, bool isKing = false):
+            x(x), y(y), alliance(alliance), isKing(isKing)
+        {
+            this->value = isKing ? KING_SCORE : CHECKER_SCORE;
+        }
+
+        void crown()
+        {
+            isKing = true;
+            this->value = KING_SCORE;
+        }
+    };
+
+    struct Tile
+    {
+        int x, y;
+        Piece piece;
+
+        Tile(int x = -1, int y = -1, Piece piece = Piece(-1, -1)):
+            x(x), y(y), piece(piece)
+        {}
+
+        bool isEmpty() const
+        {
+            return piece.alliance == Alliance::NONE;
+        }
+
+        bool hasPiece() const
+        {
+            return !isEmpty();
+        }
+
+        bool isLight() const
+        {
+            return (x + y) % 2 == 0;
+        }
+
+        bool isDark() const
+        {
+            return !isLight();
+        }
+
+        void setPiece(Piece piece)
+        {
+            this->piece = piece;
+        }
+
+        void removePiece()
+        {
+           this->piece = Piece();
+        }
+
+    };
+
+    struct Step
+    {
+        Tile start, end;
+        Piece captured;
+        Step(Tile start, Tile end, Piece captured = Piece()):
+            start(start), end(end), captured(captured)
+        {}
+    };
+
+    using Move = std::vector<Step>;
 
     void setupInitialPosition();
-    bool isValidSpot(int x, int y) const;
-    bool isValidSpot(Spot spot) const;
-    bool isCellEmpty(int x, int y) const;
-    Cell getCell(int x, int y) const;
-    Cell getCell(Spot spot) const;
-
+    bool isValidTile(int x, int y) const;
+    bool isTileEmpty(int x, int y) const;
+    Tile getTile(int x, int y) const;
+    bool makeMove(Move move);
+    void calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const;
+    void calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) const;
+    int score() const;
 private:
-    Cell mGrid[BOARD_SIZE][BOARD_SIZE];
+    Tile grid_[BOARD_SIZE][BOARD_SIZE];
+    const int offsetX_[4] { +1, +1, -1, -1 };
+    const int offsetY_[4] { -1, +1, +1, -1 };
+    std::vector<Move> lastJumpChain_;
     void clearBoard();
-    bool setCell(Cell cell, Spot spot);
+    bool isFriendlyCell(Tile cell, Alliance alliance) const;
+
 };
 
 #endif // BOARD_HPP

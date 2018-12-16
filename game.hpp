@@ -4,27 +4,19 @@
 #include "board.hpp"
 #include "alphabeta.hpp"
 
-struct Step
-{
-    Spot start, end;
-};
 
-using Move = std::vector<Step>;
 
 class Game
 {
 public:
     explicit Game();
-    enum class Alliance
-    {
-        RED,
-        BLUE
-    };
-    bool tryToMove(Spot start, Spot end);
+
+    bool tryToMove(int x, int y);
     void undoLastMove();
 private:
     Board mBoard;
     AlphaBeta mAI;
+
 };
 
 /*

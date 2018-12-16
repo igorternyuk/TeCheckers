@@ -34,7 +34,7 @@ void Painter::drawEmptyBoard(int topLeftX, int topLeftY, int boardSize,
             {
                 color = x % 2 == 0 ? lightCells : darkCells;
             }
-            drawFilledRect(x * side, y * side, side, color);
+            drawFilledRect(topLeftX + x * side, topLeftY + y * side, side, color);
         }
     }
 }
@@ -47,37 +47,28 @@ void Painter::drawBoard(const Board &board)
     {
         for(int x = 0; x < Board::BOARD_SIZE; ++x)
         {
-            switch (board.getCell(x,y)) {
-                case Board::Cell::EMPTY:
-                    break;
-                case Board::Cell::RED_CHECKER:
-                drawPolygon(x * cellSize + cellSize / 2,
-                            y * cellSize + cellSize / 2,
-                            0.45f * cellSize, 5, {255, 0, 0});
-                    break;
-                case Board::Cell::RED_KING:
-                drawPolygon(x * cellSize + cellSize / 2,
-                            y * cellSize + cellSize / 2,
-                            0.45f * cellSize, 5, {255, 0, 0});
+            Board::Tile currTile = board.getTile(x,y);
+            if(board.getTile(x,y).hasPiece())
+            {
+                if(currTile.piece.alliance == Board::Alliance::RED)
+                {
                     drawPolygon(x * cellSize + cellSize / 2,
                                 y * cellSize + cellSize / 2,
-                                cellSize / 4, 20,
-                                {255,255,0});
-                    break;
-                case Board::Cell::BLUE_CHECKER:
-                drawPolygon(x * cellSize + cellSize / 2,
-                            y * cellSize + cellSize / 2,
-                            0.45f * cellSize, 5, {24,41,235});
-                    break;
-                case Board::Cell::BLUE_KING:
+                                0.45f * cellSize, 5, {255, 0, 0});
+                }
+                else if(currTile.piece.alliance == Board::Alliance::BLUE)
+                {
                     drawPolygon(x * cellSize + cellSize / 2,
-                                y * cellSize + cellSize/ 2,
+                                y * cellSize + cellSize / 2,
                                 0.45f * cellSize, 5, {24,41,235});
+                }
+                if(currTile.piece.isKing)
+                {
                     drawPolygon(x * cellSize + cellSize / 2,
                                 y * cellSize + cellSize / 2,
                                 cellSize / 4, 20,
                                 {255,255,0});
-                    break;
+                }
             }
         }
     }

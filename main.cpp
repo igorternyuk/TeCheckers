@@ -1,7 +1,7 @@
-#include <iostream>
-#include <GL/glut.h>
 #include "game.hpp"
 #include "painter.hpp"
+#include <iostream>
+#include <GL/glut.h>
 
 static Painter painter;
 Board board;
@@ -10,84 +10,56 @@ void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     painter.drawBoard(board);
+
+#ifdef DEBUG
+    std::vector<Board::Move> moves;
+    board.calcLegalMoves(Board::Alliance::RED, moves);
+    std::cout << "moves.size() = " << moves.size() << std::endl;
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glBegin(GL_LINES);
+    for(auto mi = moves.begin(); mi != moves.end(); ++mi)
+    {
+        for(auto si = mi->begin(); si != mi->end(); ++si)
+        {
+            int startX = si->start.x * 60 + 30;
+            int startY = si->start.y * 60 + 30;
+            int endX = si->end.x * 60 + 30;
+            int endY = si->end.y * 60 + 30;
+            glVertex2f(startX, startY);
+            glVertex2f(endX, endY);
+        }
+    }
+    glEnd();
+#endif
     glutSwapBuffers();
 }
 
-/*
-void display()
+void mouse(int button, int state, int x, int y)
 {
-  glClear(GL_COLOR_BUFFER_BIT);
-  for (int x = 0; x < 8; ++x)
-    for (int y = 0; y < 8; ++y)
+    if(state == GLUT_UP && button == GLUT_LEFT_BUTTON)
     {
-      if ((x + y) % 2)
-        glColor3f(0.0f, 0.0f, 0.0f);
-      else
-        glColor3f(1.0f, 1.0f, 1.0f);
-      glBegin(GL_QUADS);
-      glVertex2f(x * 480 / 8, y * 480 / 8);
-      glVertex2f((x + 1) * 480 / 8, y * 480 / 8);
-      glVertex2f((x + 1) * 480 / 8, (y + 1) * 480 / 8);
-      glVertex2f(x * 480 / 8, (y + 1) * 480 / 8);
-      glEnd();
-      switch (game.cell(x, y))
-      {
-      case Game::EMPTY:
-        break;
-      case Game::BLACK:
-        glColor3f(0.3f, 0.3f, 0.3f);
-        glBegin(GL_POLYGON);
-        for (int a = 0; a < 5; ++a)
-        {
-          float xx = 480 / 8 / 2 * cos(2 * 3.1415926 * a / 5) + (x + 0.5f) * 480 / 8;
-          float yy =  480 / 8 / 2 * sin(2 * 3.1415926 * a / 5) + (y + 0.5f) * 480 / 8;
-          glVertex2f(xx, yy);
-        }
-        glEnd();
-        break;
-      case Game::WHITE:
-        Pos selected = game.selectedCell();
-        if (selected.first == x && selected.second == y)
-          glColor3f(1.0f, 0.0f, 0.0f);
-        else
-          glColor3f(0.7f, 0.7f, 0.7f);
-        glBegin(GL_POLYGON);
-        for (int a = 0; a < 5; ++a)
-        {
-          float xx = 480 / 8 / 2 * cos(2 * 3.1415926 * a / 5) + (x + 0.5f) * 480 / 8;
-          float yy =  480 / 8 / 2 * sin(2 * 3.1415926 * a / 5) + (y + 0.5f) * 480 / 8;
-          glVertex2f(xx, yy);
-        }
-        glEnd();
-        break;
-      }
+        std::cout << "x = " << (x / 60) << " y = " << (y / 60) << std::endl;
     }
-#ifdef DEBUG
-  std::vector<Move> moves;
-  game.getListOfLegalMoves(Game::WHITE_SIDE, moves);
-  glColor3f(0.0f, 1.0f, 0.0f);
-  glBegin(GL_LINES);
-  for (std::vector<Move>::iterator i = moves.begin(); i != moves.end(); ++i)
+}
+/*
+void mouse(int button, int state, int x, int y)
+{
+  if (state == GLUT_UP)
   {
-    for (Move::iterator j = i->begin(); j != i->end(); ++j)
-    {
-      int x1 = j->first.first;
-      int y1 = j->first.second;
-      int x2 = j->second.first;
-      int y2 = j->second.second;
-      glVertex2f((x1 + 0.5f) * 480 / 8, (y1 + 0.5f) * 480 / 8);
-      glVertex2f((x2 + 0.5f) * 480 / 8, (y2 + 0.5f) * 480 / 8);
-    }
+    std::vector<Move> moves;
+    game.getListOfLegalMoves(Game::WHITE_SIDE, moves);
+    if (moves.empty())
+      game = Game();
+    const int xx = x / (480 / 8);
+    const int yy = y / (480 / 8);
+    if (game.selectedCell() == std::make_pair(-1, -1))
+      game.selectCell(xx, yy);
+    else
+      game.move(xx, yy);
+    glutPostRedisplay();
   }
-#endif
-  glutSwapBuffers();
 }
 */
-
-void timer(int = 0)
-{
-
-}
 
 int main(int argc, char *argv[])
 {
@@ -101,7 +73,7 @@ int main(int argc, char *argv[])
     glLoadIdentity();
     glOrtho(0,480,480,0,-1,1);
     glutDisplayFunc(display);
-    glutTimerFunc(300, timer, 0);
+    glutMouseFunc(mouse);
     glutMainLoop();
     return 0;
 }
