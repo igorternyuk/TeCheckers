@@ -46,8 +46,8 @@ public:
         int x, y;
         Piece piece;
 
-        Tile(int x = -1, int y = -1, Piece piece = Piece(-1, -1)):
-            x(x), y(y), piece(piece)
+        Tile(int x = -1, int y = -1):
+            x(x), y(y)
         {}
 
         bool isEmpty() const
@@ -97,6 +97,7 @@ public:
     bool isValidTile(int x, int y) const;
     bool isTileEmpty(int x, int y) const;
     Tile getTile(int x, int y) const;
+    bool setPiece(int x, int y, Alliance alliance, bool isKing = false);
     bool makeMove(Move move);
     void calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const;
     void calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) const;
@@ -108,6 +109,8 @@ private:
     std::vector<Move> lastJumpChain_;
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;
+    bool checkCrown(const Piece &piece) const;
+
 
 };
 

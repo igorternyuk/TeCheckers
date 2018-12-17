@@ -13,8 +13,11 @@ void display()
 
 #ifdef DEBUG
     std::vector<Board::Move> moves;
-    board.calcLegalMoves(Board::Alliance::RED, moves);
+    Board::Move move;
+    board.calcAllJumps(board.getTile(0,7).piece, move, moves);
+    /*board.calcLegalMoves(Board::Alliance::BLUE, moves);*/
     std::cout << "moves.size() = " << moves.size() << std::endl;
+
     glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_LINES);
     for(auto mi = moves.begin(); mi != moves.end(); ++mi)
