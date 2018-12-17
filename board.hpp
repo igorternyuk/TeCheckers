@@ -99,14 +99,16 @@ public:
     Tile getTile(int x, int y) const;
     bool setPiece(int x, int y, Alliance alliance, bool isKing = false);
     bool makeMove(Move move);
+    void undoLastMove();
     void calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const;
     void calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) const;
     int score() const;
+
 private:
     Tile grid_[BOARD_SIZE][BOARD_SIZE];
     const int offsetX_[4] { +1, +1, -1, -1 };
     const int offsetY_[4] { -1, +1, +1, -1 };
-    std::vector<Move> lastJumpChain_;
+    std::vector<Move> moveLog_;
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;
     bool checkCrown(const Piece &piece) const;

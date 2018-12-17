@@ -5,17 +5,16 @@
 
 Board::Board()
 {
-    clearBoard();
-    //setupInitialPosition();
-    //getTile(2,7).setPiece(Piece(2,7,Alliance::RED));
-    setPiece(0,7,Alliance::RED, true);
+    //clearBoard();
+    setupInitialPosition();
+    /*setPiece(0,7,Alliance::RED, true);
     setPiece(1,6,Alliance::BLUE, false);
     setPiece(3,4,Alliance::BLUE, false);
     setPiece(5,4,Alliance::BLUE, false);
     setPiece(5,2,Alliance::BLUE, false);
     setPiece(5,6,Alliance::BLUE, false);
     setPiece(3,6,Alliance::BLUE, false);
-    setPiece(1,4,Alliance::BLUE, false);
+    setPiece(1,4,Alliance::BLUE, false);*/
 }
 
 void Board::setupInitialPosition()
@@ -36,7 +35,6 @@ void Board::setupInitialPosition()
             setPiece(x,y,Alliance::RED);
         }
     }
-
 }
 
 void Board::clearBoard()
@@ -83,7 +81,57 @@ bool Board::setPiece(int x, int y, Board::Alliance alliance, bool isKing)
 
 bool Board::makeMove(Move move)
 {
-    return false;
+    if(move.empty()) return false;
+    int startX = move[0].start.x;
+    int startY = move[0].start.y;
+    Piece movedPiece = move[0].start.piece;
+    int endX = move[move.size() - 1].end.x;
+    int endY = move[move.size() - 1].end.y;
+
+    if(!(isValidTile(startX, startY) && grid_[startY][startX].isDark()
+            && isValidTile(endX, endY) && grid_[endY][endX].isDark()))
+        return false;
+
+    grid_[startY][startX].removePiece();
+    grid_[endY][endX].setPiece(movedPiece);
+
+    if(move.size() > 1 || (move.size() == 1 && move.at(0).captured.x != -1))
+    {
+        for(auto it = move.begin(); it != move.end(); ++it)
+        {
+            int cx = it->captured.x;
+            int cy = it->captured.y;
+            grid_[cy][cx].removePiece();
+        }
+    }
+    moveLog_.push_back(move);
+
+    return true;
+}
+
+void Board::undoLastMove()
+{
+    if(moveLog_.empty()) return;
+    Move move = moveLog_[moveLog_.size() - 1];
+    int startX = move[0].start.x;
+    int startY = move[0].start.y;
+    Piece movedPiece = move[0].start.piece;
+    int endX = move[move.size() - 1].end.x;
+    int endY = move[move.size() - 1].end.y;
+    grid_[startY][startX].setPiece(movedPiece);
+    grid_[endY][endX].removePiece();
+
+    if(move.size() > 1 || (move.size() == 1 && move.at(0).captured.x != -1))
+    {
+        for(auto it = move.begin(); it != move.end(); ++it)
+        {
+            int cx = it->captured.x;
+            int cy = it->captured.y;
+            grid_[cy][cx].setPiece(it->captured);
+        }
+    }
+
+    moveLog_.pop_back();
 }
 
 void Board::calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const
@@ -98,7 +146,6 @@ void Board::calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const
                 Move move;
                 calcAllJumps(getTile(x,y).piece, move, moves);
             }
-
         }
     }
 
@@ -128,7 +175,6 @@ void Board::calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const
                         moves.push_back(move);
                     }
                 }
-
             }
             else
             {
@@ -157,7 +203,7 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
 
     for(int dir = 0; dir < 4; ++dir)
     {
-        bool enemyDetected = false;
+        bool targetDetected = false;
         Tile current = getTile(piece.x, piece.y);
         Piece target;
 
@@ -166,7 +212,7 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
             current = getTile(piece.x + n * offsetX_[dir], piece.y + n * offsetY_[dir]);
             if(!isValidTile(current.x, current.y))
                 break;
-            if(enemyDetected)
+            if(targetDetected)
             {
                 if(!current.isEmpty())
                     break;
@@ -198,7 +244,7 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
             {
                 if(current.hasPiece() && current.piece.alliance != piece.alliance)
                 {
-                    enemyDetected = true;
+                    targetDetected = true;
                     target = current.piece;
                 }
             }
@@ -229,5 +275,3 @@ int Board::score() const
     }
     return score;
 }
-
-
