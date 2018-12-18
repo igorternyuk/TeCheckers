@@ -1,5 +1,8 @@
 #include "painter.hpp"
+#include <GL/glut.h>
+//#include <GL/gl.h>
 #include <cmath>
+#include <cstring>
 
 Painter::Painter()
 {}
@@ -83,4 +86,15 @@ void Painter::drawFilledRect(float x, float y, float side, Color color)
     glVertex2f(x + side, y + side);
     glVertex2f(x, y + side);
     glEnd();
+}
+
+void Painter::drawWord(char *word, float x_, float y_, float space, Color color)
+{
+    glColor3f(color.red / 255.f, color.green / 255.f, color.blue / 255.f);
+    for(unsigned int i = 0; i < strlen(word); ++i)
+    {
+        glRasterPos2f(x_ + i * space, y_);
+        char ch = word[i];
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, (int)ch);
+    }
 }

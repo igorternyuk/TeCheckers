@@ -2,6 +2,8 @@
 #define BOARD_HPP
 
 #include <vector>
+#include <string>
+#include <cmath>
 
 class Board
 {
@@ -38,6 +40,12 @@ public:
         {
             isKing = true;
             this->value = KING_SCORE;
+        }
+
+        bool operator==(const Piece &piece)
+        {
+            return this->x == piece.x && this->y == piece.y
+                    && this->isKing == piece.isKing && this->alliance == piece.alliance;
         }
     };
 
@@ -80,7 +88,18 @@ public:
            this->piece = Piece();
         }
 
+        int distanceTo(const Tile& other)
+        {
+            return abs(this->x - other.x) + abs(this->y - other.y);
+        }
+
+        bool operator==(const Tile &a) {
+            return this->x == a.x && this->y == a.y && this->piece == a.piece;
+        }
+
     };
+
+    static Tile NULL_TILE;
 
     struct Step
     {
@@ -89,6 +108,12 @@ public:
         Step(Tile start, Tile end, Piece captured = Piece()):
             start(start), end(end), captured(captured)
         {}
+
+        bool isJump() const
+        {
+            return captured.x != -1 && captured.y != -1;
+        }
+
     };
 
     using Move = std::vector<Step>;
@@ -103,6 +128,8 @@ public:
     void calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const;
     void calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) const;
     int score() const;
+    std::string toString();
+    const std::vector<Move>& getMoveLog() const;
 
 private:
     Tile grid_[BOARD_SIZE][BOARD_SIZE];
@@ -112,8 +139,6 @@ private:
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;
     bool checkCrown(const Piece &piece) const;
-
-
 };
 
 #endif // BOARD_HPP

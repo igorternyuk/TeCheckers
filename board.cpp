@@ -1,7 +1,10 @@
-#include "board.hpp"
-#include <cmath>
+﻿#include "board.hpp"
+
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+
+Board::Tile Board::NULL_TILE = Tile();
 
 Board::Board()
 {
@@ -12,9 +15,7 @@ Board::Board()
     setPiece(3,4,Alliance::BLUE, false);
     setPiece(5,4,Alliance::BLUE, false);
     setPiece(5,2,Alliance::BLUE, false);
-    setPiece(5,6,Alliance::BLUE, false);
-    setPiece(3,6,Alliance::BLUE, false);
-    setPiece(1,4,Alliance::BLUE, false);*/
+    setPiece(5,6,Alliance::BLUE, false);*/
 }
 
 void Board::setupInitialPosition()
@@ -24,7 +25,7 @@ void Board::setupInitialPosition()
     {
         for(int x = (y + 1) % 2; x < BOARD_SIZE; x += 2)
         {
-            setPiece(x,y,Alliance::BLUE);
+            setPiece(x,y,Alliance::BLUE, true);
         }
     }
 
@@ -32,7 +33,7 @@ void Board::setupInitialPosition()
     {
         for(int x = (y + 1) % 2; x < BOARD_SIZE; x += 2)
         {
-            setPiece(x,y,Alliance::RED);
+            setPiece(x,y,Alliance::RED, true);
         }
     }
 }
@@ -51,7 +52,7 @@ void Board::clearBoard()
 bool Board::checkCrown(const Board::Piece &piece) const
 {
     return (piece.alliance == Alliance::RED && piece.y == 0)
-           || (piece.alliance == Alliance::BLUE && piece.y == BOARD_SIZE - 1);
+            || (piece.alliance == Alliance::BLUE && piece.y == BOARD_SIZE - 1);
 }
 
 bool Board::isValidTile(int x, int y) const
@@ -61,12 +62,12 @@ bool Board::isValidTile(int x, int y) const
 
 bool Board::isTileEmpty(int x, int y) const
 {
-    return getTile(x, y).isEmpty();
+    return isValidTile(x,y) && grid_[y][x].isEmpty();
 }
 
 Board::Tile Board::getTile(int x, int y) const
 {
-    return isValidTile(x, y) ? grid_[y][x] : Tile();
+    return isValidTile(x, y) ? grid_[y][x] : NULL_TILE;
 }
 
 bool Board::setPiece(int x, int y, Board::Alliance alliance, bool isKing)
@@ -95,17 +96,27 @@ bool Board::makeMove(Move move)
     grid_[startY][startX].removePiece();
     grid_[endY][endX].setPiece(movedPiece);
 
-    if(move.size() > 1 || (move.size() == 1 && move.at(0).captured.x != -1))
+    bool coronation = false;
+    if(move.size() > 1 || (move.size() == 1 && move.at(0).isJump()))
     {
         for(auto it = move.begin(); it != move.end(); ++it)
         {
             int cx = it->captured.x;
             int cy = it->captured.y;
             grid_[cy][cx].removePiece();
+            int ey = it->end.y;
+            if((movedPiece.alliance == Alliance::RED && ey == 0)
+                    || (movedPiece.alliance == Alliance::BLUE && ey == BOARD_SIZE - 1))
+            {
+                coronation = true;
+            }
         }
     }
+    if(coronation)
+    {
+        grid_[endY][endX].piece.crown();
+    }
     moveLog_.push_back(move);
-
     return true;
 }
 
@@ -141,7 +152,7 @@ void Board::calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const
     {
         for(int x = 0; x < BOARD_SIZE; ++x)
         {
-            if(!getTile(x,y).isEmpty())
+            if(getTile(x,y).hasPiece() && getTile(x,y).piece.alliance == alliance)
             {
                 Move move;
                 calcAllJumps(getTile(x,y).piece, move, moves);
@@ -235,8 +246,9 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
                     {
                         p.crown();
                     }
+
                     legalMoves.push_back(move);
-                    calcAllJumps(p, move, legalMoves);
+                    calcAllJumps(p, move, legalMoves);                    
                     move = oldMove;
                 }
             }
@@ -274,4 +286,40 @@ int Board::score() const
         }
     }
     return score;
+}
+
+std::string Board::toString()
+{
+    std::stringstream ss;
+    for(int y = 0; y < BOARD_SIZE; ++y)
+    {
+        std::string line;
+        for(int x = 0; x < BOARD_SIZE; ++x)
+        {
+            if(grid_[y][x].hasPiece())
+            {
+                Piece p = grid_[y][x].piece;
+                if(p.alliance == Alliance::RED)
+                {
+                    line += p.isKing ? "R" : "r";
+                }
+                else if(p.alliance == Alliance::BLUE)
+                {
+                    line += p.isKing ? "B" : "b";
+                }
+            }
+            else
+            {
+                line += "_";
+            }
+        }
+        line += "\n";
+        ss << line;
+    }
+    return ss.str();
+}
+
+const std::vector<Board::Move> &Board::getMoveLog() const
+{
+    return moveLog_;
 }

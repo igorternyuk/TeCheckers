@@ -2,13 +2,21 @@
 #define PAINTER_HPP
 
 #include "board.hpp"
-#include <GL/glut.h>
 
 struct Color
 {
     int red;
     int green;
     int blue;
+    /*Color(int red = 0, int green = 0, int blue = 0)
+    {
+        if(red < 0) red = 0;
+        if(red > 255) red = 255;
+        if(green < 0) green = 0;
+        if(green > 255) green = 255;
+        if(blue < 0) blue = 0;
+        if(blue > 255) blue = 255;
+    }*/
 };
 
 class Painter
@@ -22,6 +30,7 @@ public:
                    int side = 60, Color darkCells = {0,0,0},
                    Color lightCells = {255,255,255});
     static void drawBoard(const Board& board);
+    static void drawWord(char *word, float x_, float y_, float space, Color color);
 };
 
 #endif // PAINTER_HPP
