@@ -8,14 +8,7 @@ Board::Tile Board::NULL_TILE = Tile();
 
 Board::Board()
 {
-    //clearBoard();
     setupInitialPosition();
-    /*setPiece(0,7,Alliance::RED, true);
-    setPiece(1,6,Alliance::BLUE, false);
-    setPiece(3,4,Alliance::BLUE, false);
-    setPiece(5,4,Alliance::BLUE, false);
-    setPiece(5,2,Alliance::BLUE, false);
-    setPiece(5,6,Alliance::BLUE, false);*/
 }
 
 void Board::setupInitialPosition()
@@ -25,7 +18,7 @@ void Board::setupInitialPosition()
     {
         for(int x = (y + 1) % 2; x < BOARD_SIZE; x += 2)
         {
-            setPiece(x,y,Alliance::BLUE, true);
+            setPiece(x,y,Alliance::BLUE);
         }
     }
 
@@ -33,7 +26,7 @@ void Board::setupInitialPosition()
     {
         for(int x = (y + 1) % 2; x < BOARD_SIZE; x += 2)
         {
-            setPiece(x,y,Alliance::RED, true);
+            setPiece(x,y,Alliance::RED);
         }
     }
 }
@@ -105,6 +98,7 @@ bool Board::makeMove(Move move)
             int cy = it->captured.y;
             grid_[cy][cx].removePiece();
             int ey = it->end.y;
+            std::cout << "ey = " << ey << std::endl;
             if((movedPiece.alliance == Alliance::RED && ey == 0)
                     || (movedPiece.alliance == Alliance::BLUE && ey == BOARD_SIZE - 1))
             {
@@ -112,6 +106,15 @@ bool Board::makeMove(Move move)
             }
         }
     }
+    if((move.size() == 1 && !move.at(0).isJump()))
+    {
+        if((movedPiece.alliance == Alliance::RED && endY == 0)
+                || (movedPiece.alliance == Alliance::BLUE && endY == BOARD_SIZE - 1))
+        {
+            coronation = true;
+        }
+    }
+
     if(coronation)
     {
         grid_[endY][endX].piece.crown();
@@ -220,12 +223,19 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
 
         for (int n = 1; n <= N; ++n)
         {
-            current = getTile(piece.x + n * offsetX_[dir], piece.y + n * offsetY_[dir]);
-            if(!isValidTile(current.x, current.y))
+            int dx = n * offsetX_[dir];
+            int dy = n * offsetY_[dir];
+            int nx = piece.x + dx;
+            int ny = piece.y + dy;
+
+            if(!isValidTile(nx, ny))
                 break;
+
+            current = getTile(nx, ny);
+
             if(targetDetected)
             {
-                if(!current.isEmpty())
+                if(current.hasPiece())
                     break;
                 bool isSameTarget = false;
                 for(auto it = move.begin(); it != move.end(); ++it)
@@ -248,16 +258,23 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
                     }
 
                     legalMoves.push_back(move);
-                    calcAllJumps(p, move, legalMoves);                    
+                    calcAllJumps(p, move, legalMoves);
                     move = oldMove;
                 }
             }
             else
             {
-                if(current.hasPiece() && current.piece.alliance != piece.alliance)
+                if(current.hasPiece())
                 {
-                    targetDetected = true;
-                    target = current.piece;
+                    if(current.piece.alliance != piece.alliance)
+                    {
+                        targetDetected = true;
+                        target = current.piece;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
         }

@@ -227,26 +227,45 @@ void Game::keyboardFunc(unsigned char key, int x, int y)
     if(key == 13)
     {
         Game::getInstance()->startNewGame();
+        glutPostRedisplay();
+    }
+    else if(key == ' ')
+    {
+        std::cout << "Last move undo" << std::endl;
+        auto log = Game::getInstance()->board_.getMoveLog();
+        if(!log.empty())
+        {
+            auto currAliance = log.at(log.size() - 1).at(0).end.piece.alliance;
+            Game::getInstance()->board_.undoLastMove();
+            Game::getInstance()->unselect();
+            Game::getInstance()->turn_ = currAliance;
+            glutPostRedisplay();
+        }
     }
 }
 
 void Game::highlightLastMove()
 {
-
     Board::Move lastMove = Game::getInstance()->lastMove_;
-    for(auto it = lastMove.begin(); it != lastMove.end(); ++it)
+    std::vector<Board::Move> lolm;
+    Board::Alliance turn = Game::getInstance()->turn_;
+    Game::getInstance()->board_.calcLegalMoves(turn, lolm);
+    for(auto m: lolm)
     {
-        int x1 = it->start.x;
-        int y1 = it->start.y;
-        int x2 = it->end.x;
-        int y2 = it->end.y;
-        glColor3f(0.0f, 1.0f, 0.0f);
-        glLineWidth(2);
-        glBegin(GL_LINES);
-        glVertex2f(x1 * SIDE + SIDE / 2, y1 * SIDE + SIDE / 2);
-        glVertex2f(x2 * SIDE + SIDE / 2, y2 * SIDE + SIDE / 2);
-        glEnd();
-        glLineWidth(1);
+        for(auto it = m.begin(); it != m.end(); ++it)
+        {
+            int x1 = it->start.x;
+            int y1 = it->start.y;
+            int x2 = it->end.x;
+            int y2 = it->end.y;
+            glColor3f(0.0f, 1.0f, 0.0f);
+            glLineWidth(2);
+            glBegin(GL_LINES);
+            glVertex2f(x1 * SIDE + SIDE / 2, y1 * SIDE + SIDE / 2);
+            glVertex2f(x2 * SIDE + SIDE / 2, y2 * SIDE + SIDE / 2);
+            glEnd();
+            glLineWidth(1);
+        }
     }
 }
 

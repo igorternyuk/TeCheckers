@@ -81,6 +81,8 @@ public:
         void setPiece(Piece piece)
         {
             this->piece = piece;
+            this->piece.x = x;
+            this->piece.y = y;
         }
 
         void removePiece()
