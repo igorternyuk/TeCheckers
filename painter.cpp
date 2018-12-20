@@ -1,4 +1,5 @@
 #include "painter.hpp"
+#include "game.hpp"
 #include <GL/glut.h>
 //#include <GL/gl.h>
 #include <cmath>
@@ -53,28 +54,85 @@ void Painter::drawBoard(const Board &board)
             Board::Tile currTile = board.getTile(x,y);
             if(board.getTile(x,y).hasPiece())
             {
+                const float cx = x * cellSize + cellSize / 2;
+                const float cy = y * cellSize + cellSize / 2;
+
                 if(currTile.piece.alliance == Board::Alliance::RED)
                 {
-                    drawPolygon(x * cellSize + cellSize / 2,
-                                y * cellSize + cellSize / 2,
-                                0.45f * cellSize, 5, {255, 0, 0});
+                    drawPolygon(cx, cy, 0.45f * cellSize, 5, {255, 0, 0});
                 }
                 else if(currTile.piece.alliance == Board::Alliance::BLUE)
                 {
-                    drawPolygon(x * cellSize + cellSize / 2,
-                                y * cellSize + cellSize / 2,
-                                0.45f * cellSize, 5, {24,41,235});
+                    drawPolygon(cx, cy,
+                                0.45f * cellSize, 5, {0,109,211});
                 }
                 if(currTile.piece.isKing)
                 {
-                    drawPolygon(x * cellSize + cellSize / 2,
-                                y * cellSize + cellSize / 2,
-                                cellSize / 4, 20,
-                                {255,255,0});
+                    float bottomLeftX = cx - cellSize / 6;
+                    float bottomRightX = cx + cellSize / 6;
+                    float bottomY = cy + cellSize / 6;
+                    float topY = cy - cellSize / 4;
+                    float leftX = bottomLeftX - cellSize / 12;
+                    float rightX = bottomRightX + cellSize / 12;
+                    float topSides = topY + cellSize / 12;
+
+                    glColor3f(1.0f, 1.0f, 0.0f);
+                    glBegin(GL_POLYGON);
+                    glVertex2f(bottomLeftX, bottomY);
+                    glVertex2f(leftX, topSides);
+                    glVertex2f(bottomRightX, bottomY);
+                    glEnd();
+
+                    glColor3f(1.0f, 1.0f, 0.0f);
+                    glBegin(GL_POLYGON);
+                    glVertex2f(bottomLeftX, bottomY);
+                    glVertex2f(cx, topY);
+                    glVertex2f(bottomRightX, bottomY);
+                    glEnd();
+
+                    glColor3f(1.0f, 1.0f, 0.0f);
+                    glBegin(GL_POLYGON);
+                    glVertex2f(bottomLeftX, bottomY);
+                    glVertex2f(rightX, topSides);
+                    glVertex2f(bottomRightX, bottomY);
+                    glEnd();
+
+
                 }
             }
         }
     }
+}
+
+void Painter::drawMoveStep(const Board::Step &step, Color color)
+{
+    double x1 = step.start.x * Game::SIDE + Game::SIDE / 2;
+    double y1 = step.start.y * Game::SIDE + Game::SIDE / 2;
+    double x2 = step.end.x * Game::SIDE + Game::SIDE / 2;
+    double y2 = step.end.y * Game::SIDE + Game::SIDE / 2;
+    const double arrowSideLength = 20;
+    double alpha = atan2(y2 - y1, x2 - x1);
+    double leftX = x2 - arrowSideLength * cos(alpha - M_PI / 12);
+    double leftY = y2 - arrowSideLength * sin(alpha - M_PI / 12);
+    double rightX = x2 - arrowSideLength * cos(alpha + M_PI / 12);;
+    double rightY = y2 - arrowSideLength * sin(alpha + M_PI / 12);;
+    glColor3f(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
+    glLineWidth(2);
+    glBegin(GL_LINES);
+    glVertex2f(x1, y1);
+    glVertex2f(x2, y2);
+    glEnd();
+
+    glBegin(GL_LINES);
+    glVertex2f(leftX, leftY);
+    glVertex2f(x2, y2);
+    glEnd();
+
+    glBegin(GL_LINES);
+    glVertex2f(rightX, rightY);
+    glVertex2f(x2, y2);
+    glEnd();
+    glLineWidth(1);
 }
 
 void Painter::drawFilledRect(float x, float y, float side, Color color)

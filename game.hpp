@@ -1,4 +1,4 @@
-#ifndef GAME_HPP
+﻿#ifndef GAME_HPP
 #define GAME_HPP
 
 #include "board.hpp"
@@ -8,7 +8,12 @@
 class Game
 {    
 public:
-
+    enum
+    {
+        WINDOW_WIDTH = 480,
+        WINDOW_HEIGHT = 480,
+        SIDE = WINDOW_WIDTH / Board::BOARD_SIZE
+    };
     static Game* getInstance();
     void run(int argc, char *argv[]);
 
@@ -19,12 +24,6 @@ private:
     Game& operator=(const Game& game) = delete;
     Game& operator=(Game&& game) = delete;
 
-    enum
-    {
-        WINDOW_WIDTH = 480,
-        WINDOW_HEIGHT = 480,
-        SIDE = WINDOW_WIDTH / Board::BOARD_SIZE
-    };
     enum class GameStatus
     {
         RED_WON,
@@ -58,7 +57,9 @@ private:
     static void mouse(int state, int button, int x, int y);
     static void keyboardFunc(unsigned char key, int x, int y);
     static void highlightLastMove();
+    static void highlightLegalMoves();
     static void drawGameStatus();
+    static void drawMove(const Board::Move& move);
 };
 
 

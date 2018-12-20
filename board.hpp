@@ -141,6 +141,7 @@ private:
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;
     bool checkCrown(const Piece &piece) const;
+    bool isEndGameScenario() const;
 };
 
 #endif // BOARD_HPP

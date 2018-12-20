@@ -23,6 +23,7 @@ class Painter
 {
 public:
     explicit Painter();
+    static void drawMoveStep(const Board::Step &step, Color color);
     static void drawFilledRect(float x, float y, float side, Color color = {255,255,255});
     static void drawPolygon(float centerX, float centerY, float radius, int numSides = 5,
                      Color color = {255,255,255});

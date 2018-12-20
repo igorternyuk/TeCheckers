@@ -9,6 +9,7 @@ Board::Tile Board::NULL_TILE = Tile();
 Board::Board()
 {
     setupInitialPosition();
+    moveLog_.clear();
 }
 
 void Board::setupInitialPosition()
@@ -46,6 +47,15 @@ bool Board::checkCrown(const Board::Piece &piece) const
 {
     return (piece.alliance == Alliance::RED && piece.y == 0)
             || (piece.alliance == Alliance::BLUE && piece.y == BOARD_SIZE - 1);
+}
+
+bool Board::isEndGameScenario() const
+{
+    std::vector<Board::Move> redLegalMoves;
+    calcLegalMoves(Alliance::RED, redLegalMoves);
+    std::vector<Board::Move> blueLegalMoves;
+    calcLegalMoves(Alliance::BLUE, blueLegalMoves);
+    return redLegalMoves.empty() || blueLegalMoves.empty();
 }
 
 bool Board::isValidTile(int x, int y) const

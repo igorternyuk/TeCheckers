@@ -120,6 +120,7 @@ void Game::startNewGame()
     board_.setupInitialPosition();
     status_ = GameStatus::PLAY;
     turn_ = Board::Alliance::RED;
+    lastMove_.clear();
 }
 
 void Game::printBoard()
@@ -196,6 +197,7 @@ void Game::display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     Painter::drawBoard(Game::getInstance()->getBoard());
+    highlightLegalMoves();
     highlightLastMove();
     drawGameStatus();
     Board::Alliance turn = Game::getInstance()->turn_;
@@ -247,6 +249,15 @@ void Game::keyboardFunc(unsigned char key, int x, int y)
 void Game::highlightLastMove()
 {
     Board::Move lastMove = Game::getInstance()->lastMove_;
+    for(auto it = lastMove.begin(); it != lastMove.end(); ++it)
+    {
+        Painter::drawMoveStep(*it, {211,204,0});
+    }
+}
+
+void Game::highlightLegalMoves()
+{
+
     std::vector<Board::Move> lolm;
     Board::Alliance turn = Game::getInstance()->turn_;
     Game::getInstance()->board_.calcLegalMoves(turn, lolm);
@@ -254,20 +265,12 @@ void Game::highlightLastMove()
     {
         for(auto it = m.begin(); it != m.end(); ++it)
         {
-            int x1 = it->start.x;
-            int y1 = it->start.y;
-            int x2 = it->end.x;
-            int y2 = it->end.y;
-            glColor3f(0.0f, 1.0f, 0.0f);
-            glLineWidth(2);
-            glBegin(GL_LINES);
-            glVertex2f(x1 * SIDE + SIDE / 2, y1 * SIDE + SIDE / 2);
-            glVertex2f(x2 * SIDE + SIDE / 2, y2 * SIDE + SIDE / 2);
-            glEnd();
-            glLineWidth(1);
+            Painter::drawMoveStep(*it, {0,255,0});
         }
     }
 }
+
+
 
 void Game::drawGameStatus()
 {
