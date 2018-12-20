@@ -2,6 +2,8 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <algorithm>
+#include <thread>
+#include <iostream>
 
 Game *Game::getInstance()
 {
@@ -11,6 +13,21 @@ Game *Game::getInstance()
 
 Game::Game()
 {}
+
+Board::Alliance Game::getAiPlayer() const
+{
+    return aiPlayer_;
+}
+
+Board::Alliance Game::getCurrentPlayer() const
+{
+    return turn_;
+}
+
+Board::Alliance Game::getHumanPlayer() const
+{
+    return humanPlayer_;
+}
 
 const Board &Game::getBoard() const
 {
@@ -46,6 +63,7 @@ void Game::onMouseClick(int x, int y)
                 switchTurn();
                 checkGameStatus();
                 unselect();
+
                 if(status_ != GameStatus::PLAY)
                 {
                     return;
@@ -61,6 +79,13 @@ void Game::onMouseClick(int x, int y)
             }
         }
     }
+}
+
+void Game::aiMove()
+{
+    auto bestMove = ai_.getBestMove(board_);
+    board_.makeMove(bestMove);
+    switchTurn();
 }
 
 void Game::selectTile(int x, int y)
@@ -221,6 +246,10 @@ void Game::mouse(int button, int state, int x, int y)
         std::cout << "mx = " << mx << " my = " << my << std::endl;
         Game::getInstance()->onMouseClick(mx, my);
         glutPostRedisplay();
+        if(Game::getInstance()->getAiPlayer() == Game::getInstance()->turn_)
+        {
+            Game::getInstance()->aiMove();
+        }
     }
 }
 
@@ -240,7 +269,9 @@ void Game::keyboardFunc(unsigned char key, int x, int y)
             auto currAliance = log.at(log.size() - 1).at(0).end.piece.alliance;
             Game::getInstance()->board_.undoLastMove();
             Game::getInstance()->unselect();
-            Game::getInstance()->turn_ = currAliance;
+            Game::getInstance()->turn_ = currAliance == Board::Alliance::RED
+                    ? Board::Alliance::BLUE
+                    : Board::Alliance::RED;
             glutPostRedisplay();
         }
     }
@@ -269,8 +300,6 @@ void Game::highlightLegalMoves()
         }
     }
 }
-
-
 
 void Game::drawGameStatus()
 {

@@ -108,7 +108,6 @@ bool Board::makeMove(Move move)
             int cy = it->captured.y;
             grid_[cy][cx].removePiece();
             int ey = it->end.y;
-            std::cout << "ey = " << ey << std::endl;
             if((movedPiece.alliance == Alliance::RED && ey == 0)
                     || (movedPiece.alliance == Alliance::BLUE && ey == BOARD_SIZE - 1))
             {
@@ -156,6 +155,7 @@ void Board::undoLastMove()
     }
 
     moveLog_.pop_back();
+    moveLog_.shrink_to_fit();
 }
 
 void Board::calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const

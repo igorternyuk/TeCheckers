@@ -17,6 +17,10 @@ public:
     static Game* getInstance();
     void run(int argc, char *argv[]);
 
+    Board::Alliance getHumanPlayer() const;
+    Board::Alliance getAiPlayer() const;
+    Board::Alliance getCurrentPlayer() const;
+
 private:
     explicit Game();
     Game(const Game& game) = delete;
@@ -41,6 +45,8 @@ private:
     Board board_;
     AlphaBeta ai_;
     Board::Alliance turn_ = Board::Alliance::RED;
+    Board::Alliance humanPlayer_ = Board::Alliance::RED;
+    Board::Alliance aiPlayer_ = Board::Alliance::BLUE;
     Board::Tile& selected_ = Board::NULL_TILE;
     Board::Move lastMove_;
     GameStatus status_ = GameStatus::PLAY;
@@ -53,6 +59,7 @@ private:
     void startNewGame();
     void printBoard();
     void onMouseClick(int x, int y);
+    void aiMove();
     static void display();
     static void mouse(int state, int button, int x, int y);
     static void keyboardFunc(unsigned char key, int x, int y);

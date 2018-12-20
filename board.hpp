@@ -132,6 +132,7 @@ public:
     int score() const;
     std::string toString();
     const std::vector<Move>& getMoveLog() const;
+    bool isEndGameScenario() const;
 
 private:
     Tile grid_[BOARD_SIZE][BOARD_SIZE];
@@ -140,8 +141,7 @@ private:
     std::vector<Move> moveLog_;
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;
-    bool checkCrown(const Piece &piece) const;
-    bool isEndGameScenario() const;
+    bool checkCrown(const Piece &piece) const;    
 };
 
 #endif // BOARD_HPP
