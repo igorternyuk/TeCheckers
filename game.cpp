@@ -2,7 +2,6 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <algorithm>
-#include <thread>
 #include <iostream>
 
 Game *Game::getInstance()
@@ -86,6 +85,7 @@ void Game::aiMove()
     auto bestMove = ai_.getBestMove(board_);
     board_.makeMove(bestMove);
     switchTurn();
+    glutPostRedisplay();
 }
 
 void Game::selectTile(int x, int y)
@@ -244,12 +244,12 @@ void Game::mouse(int button, int state, int x, int y)
         int mx = x / SIDE;
         int my = y / SIDE;
         std::cout << "mx = " << mx << " my = " << my << std::endl;
-        Game::getInstance()->onMouseClick(mx, my);
-        glutPostRedisplay();
+        Game::getInstance()->onMouseClick(mx, my);        
         if(Game::getInstance()->getAiPlayer() == Game::getInstance()->turn_)
         {
             Game::getInstance()->aiMove();
         }
+        glutPostRedisplay();
     }
 }
 

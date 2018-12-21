@@ -6,9 +6,7 @@
 
 AlphaBeta::AlphaBeta(int depth):
     searchDepth_(depth)
-{
-
-}
+{}
 
 Board::Move AlphaBeta::getBestMove(Board board)
 {
@@ -34,7 +32,7 @@ Board::Move AlphaBeta::getBestMove(Board board)
                 bestMove = *it;
                 if(board.isEndGameScenario())
                 {
-                    board.undoLastMove();
+                    //board.undoLastMove();
                     break;
                 }
             }
@@ -48,13 +46,15 @@ Board::Move AlphaBeta::getBestMove(Board board)
                 bestMove = *it;
                 if(board.isEndGameScenario())
                 {
-                    board.undoLastMove();
+                    //board.undoLastMove();
                     break;
                 }
             }
         }
-        board.undoLastMove();
+        //board.undoLastMove();
     }
+    std::cout << "boardEvaluated_ = " << boardEvaluated_ << std::endl;
+    std::cout << "cutoffsProduced_ = " << cutoffsProduced_ << std::endl;
     return bestMove;
 }
 
@@ -104,72 +104,13 @@ int AlphaBeta::min(Board board, int depth, int alpha, int beta)
     return beta;
 }
 
-int AlphaBeta::calcQuiescenceDepth(Board &board, int depth)
+int AlphaBeta::calcQuiescenceDepth(Board board, int depth)
 {
     return depth - 1;
 }
 
-
-
-
-
 /*
- *
- * @Override
-    public Move execute(final Board board) {
-        final long startTime = System.currentTimeMillis();
-        final Player currentPlayer = board.getCurrentPlayer();
-        Move bestMove = Move.MoveFactory.NULL_MOVE;
-        int highestSeenValue = Integer.MIN_VALUE;
-        int lowestSeenValue = Integer.MAX_VALUE;
-        int currentValue;
-        int moveCounter = 0;
-        final Collection<Move> legalMoves = MoveSorter.SMART.sort((board.getCurrentPlayer().getLegalMoves()));
-        final int numMoves = legalMoves.size();
-        System.out.println(board.getCurrentPlayer() + " THINKING with depth = " + this.searchDepth);
-        String s = "";
-        for (final Move move : legalMoves) {
-            final long candidateMoveStartTime = System.nanoTime();
-            ++moveCounter;
-            final MoveTransition moveTransition = board.getCurrentPlayer().makeMove(move);
-            this.quiescenceCount = 0;
-            if (moveTransition.getMoveStatus().isDone()) {
-                //final long candidateMoveStartTime = System.nanoTime();
-                currentValue = currentPlayer.getAlliance().isWhite() ?
-                        min(moveTransition.getTransitedBoard(), this.searchDepth - 1, highestSeenValue, lowestSeenValue) :
-                        max(moveTransition.getTransitedBoard(), this.searchDepth - 1, highestSeenValue, lowestSeenValue);
-                if (currentPlayer.getAlliance().isWhite() && currentValue > highestSeenValue) {
-                    highestSeenValue = currentValue;
-                    bestMove = move;
-                    if (moveTransition.getTransitedBoard().getBlackPlayer().isCheckMate()) {
-                        break;
-                    }
-                } else if (currentPlayer.getAlliance().isBlack() && currentValue < lowestSeenValue) {
-                    lowestSeenValue = currentValue;
-                    bestMove = move;
-                    if (moveTransition.getTransitedBoard().getWhitePlayer().isCheckMate()) {
-                        break;
-                    }
-                }
-
-                final String quiescenceInfo = " " + score(currentPlayer, highestSeenValue, lowestSeenValue) + " q: " + this.quiescenceCount;
-                s = "\t" + toString() + "(" + this.searchDepth + "), m: (" + moveCounter + "/" + numMoves + ") " + move + ", best:  " + bestMove
-
-                        + quiescenceInfo + ", t: " + calculateTimeTaken(candidateMoveStartTime, System.nanoTime());
-            }
-            System.out.println(s);
-        }
-
-        System.out.println("Board evaluated = " + this.boardsEvaluated);
-        System.out.println("this.cutsOffProduced = " + this.cutsOffProduced);
-        System.out.println("Best move = " + bestMove);
-        System.out.println("Move time = " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
-        return bestMove;
-    }
-
-
-
-    private int calculateQuiescenceDepth(final MoveTransition moveTransition, int depth) {
+     private int calculateQuiescenceDepth(final MoveTransition moveTransition, int depth) {
         if (depth == 1 && this.quiescenceCount < MAX_QUIESCENCE) {
             int activityMeasure = 0;
             if (moveTransition.getTransitedBoard().getCurrentPlayer().isUnderCheck()) {

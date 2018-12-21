@@ -14,7 +14,7 @@ private:
     int cutoffsProduced_;
     int max(Board board, int depth, int alpha, int beta);
     int min(Board board, int depth, int alpha, int beta);
-    int calcQuiescenceDepth(Board &board, int depth);
+    int calcQuiescenceDepth(Board board, int depth);
 };
 
 #endif // ALPHABETA_HPP

@@ -4,6 +4,7 @@
 #include "board.hpp"
 #include "alphabeta.hpp"
 #include "painter.hpp"
+#include <thread>
 
 class Game
 {    

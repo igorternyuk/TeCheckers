@@ -3,7 +3,7 @@ DEFINES += DEBUG
 CONFIG += c++1z
 CONFIG -= app_bundle
 CONFIG -= qt
-LIBS += -lglut -lGLU -lGL -lGLEW
+LIBS += -lglut -lGLU -lGL -lGLEW -lpthread
 SOURCES += \
         main.cpp \
     game.cpp \
