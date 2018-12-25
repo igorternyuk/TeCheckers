@@ -2,6 +2,7 @@
 #define ALPHABETA_HPP
 
 #include "board.hpp"
+#include <vector>
 
 class AlphaBeta
 {
@@ -15,6 +16,7 @@ private:
     int max(Board board, int depth, int alpha, int beta);
     int min(Board board, int depth, int alpha, int beta);
     int calcQuiescenceDepth(Board board, int depth);
+    bool isSubset(std::vector<Board::Step> &first, std::vector<Board::Step> &second);
 };
 
 #endif // ALPHABETA_HPP

@@ -346,6 +346,14 @@ std::string Board::toString()
     return ss.str();
 }
 
+std::string Board::tileToAlgebraicNotation(const Board::Tile &tile)
+{
+    
+    int x = tile.x;
+    int y = tile.y;
+    
+}
+
 const std::vector<Board::Move> &Board::getMoveLog() const
 {
     return moveLog_;

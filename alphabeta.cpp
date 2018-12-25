@@ -1,7 +1,8 @@
 #include "alphabeta.hpp"
 #include "game.hpp"
-#include <vector>
+
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 
 AlphaBeta::AlphaBeta(int depth):
@@ -16,6 +17,20 @@ Board::Move AlphaBeta::getBestMove(Board board)
     auto computer = Game::getInstance()->getAiPlayer();
     std::vector<Board::Move> lolm;
     board.calcLegalMoves(computer, lolm);
+
+    auto it = std::remove_if(lolm.begin(), lolm.end(), [&](auto &move){
+        for(auto &m: lolm)
+        {
+            if(isSubset(move, m))
+            {
+                return true;
+            }
+        }
+        return false;
+    });
+
+    lolm.erase(it, lolm.end());
+
     int currVal = 0;
     Board::Move bestMove;
     auto human = Game::getInstance()->getHumanPlayer();
@@ -107,6 +122,23 @@ int AlphaBeta::min(Board board, int depth, int alpha, int beta)
 int AlphaBeta::calcQuiescenceDepth(Board board, int depth)
 {
     return depth - 1;
+}
+
+bool AlphaBeta::isSubset(std::vector<Board::Step> &first, std::vector<Board::Step> &second)
+{
+    if(first.size() < second.size())
+    {
+        const size_t min = first.size();
+        for(size_t i = 0; i < min; ++i)
+        {
+            if(first[i] != second[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
 }
 
 /*

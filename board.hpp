@@ -2,6 +2,7 @@
 #define BOARD_HPP
 
 #include <vector>
+#include <map>
 #include <string>
 #include <cmath>
 
@@ -95,8 +96,9 @@ public:
             return abs(this->x - other.x) + abs(this->y - other.y);
         }
 
-        bool operator==(const Tile &a) {
-            return this->x == a.x && this->y == a.y && this->piece == a.piece;
+        bool operator==(const Tile &other) {
+            return this->x == other.x && this->y == other.y
+                    && this->piece == other.piece;
         }
 
     };
@@ -116,6 +118,15 @@ public:
             return captured.x != -1 && captured.y != -1;
         }
 
+        bool operator==(const Step &other) {
+            return this->start == other.start && this->end == other.end
+                    && this->captured == other.captured;
+        }
+
+        bool operator!=(const Step &other) {
+            return !(*this == other);
+        }
+
     };
 
     using Move = std::vector<Step>;
@@ -131,6 +142,7 @@ public:
     void calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) const;
     int score() const;
     std::string toString();
+    std::string tileToAlgebraicNotation(const Tile& tile);
     const std::vector<Move>& getMoveLog() const;
     bool isEndGameScenario() const;
 
@@ -139,6 +151,7 @@ private:
     const int offsetX_[4] { +1, +1, -1, -1 };
     const int offsetY_[4] { -1, +1, +1, -1 };
     std::vector<Move> moveLog_;
+
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;
     bool checkCrown(const Piece &piece) const;    

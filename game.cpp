@@ -2,6 +2,7 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <algorithm>
+#include <thread>
 #include <iostream>
 
 Game *Game::getInstance()
@@ -35,8 +36,9 @@ const Board &Game::getBoard() const
 
 void Game::onMouseClick(int x, int y)
 {
-    if(status_ != GameStatus::PLAY)
+    if(status_ != GameStatus::PLAY || turn_ != humanPlayer_)
     {
+        std::cout << "It is not your turn" << std::endl;
         return;
     }
     if(selected_.x == -1)
@@ -84,8 +86,9 @@ void Game::aiMove()
 {
     auto bestMove = ai_.getBestMove(board_);
     board_.makeMove(bestMove);
+    lastMove_ = bestMove;
     switchTurn();
-    glutPostRedisplay();
+    //glutPostRedisplay();
 }
 
 void Game::selectTile(int x, int y)
@@ -214,6 +217,7 @@ void Game::run(int argc, char *argv[])
     glOrtho(0,WINDOW_WIDTH,WINDOW_HEIGHT,0,-1,1);    
     glutDisplayFunc(&Game::display);
     glutMouseFunc(&Game::mouse);
+    glutTimerFunc(500, &Game::timer, 0);
     glutKeyboardFunc(&Game::keyboardFunc);
     glutMainLoop();
 }
@@ -225,7 +229,7 @@ void Game::display()
     highlightLegalMoves();
     highlightLastMove();
     drawGameStatus();
-    Board::Alliance turn = Game::getInstance()->turn_;
+    /*Board::Alliance turn = Game::getInstance()->turn_;
     if(turn == Board::Alliance::RED)
     {
         std::cout << "Red's turn" << std::endl;
@@ -233,8 +237,14 @@ void Game::display()
     else if(turn == Board::Alliance::BLUE)
     {
         std::cout << "Blue's turn" << std::endl;
-    }
+    }*/
     glutSwapBuffers();
+}
+
+void Game::timer(int)
+{
+    display();
+    glutTimerFunc(500, timer, 0);
 }
 
 void Game::mouse(int button, int state, int x, int y)
@@ -247,9 +257,12 @@ void Game::mouse(int button, int state, int x, int y)
         Game::getInstance()->onMouseClick(mx, my);        
         if(Game::getInstance()->getAiPlayer() == Game::getInstance()->turn_)
         {
-            Game::getInstance()->aiMove();
+            std::thread thinking([](){
+                Game::getInstance()->aiMove();
+            });
+            thinking.detach();
         }
-        glutPostRedisplay();
+        //glutPostRedisplay();
     }
 }
 
@@ -258,7 +271,7 @@ void Game::keyboardFunc(unsigned char key, int x, int y)
     if(key == 13)
     {
         Game::getInstance()->startNewGame();
-        glutPostRedisplay();
+        //glutPostRedisplay();
     }
     else if(key == ' ')
     {
@@ -272,7 +285,7 @@ void Game::keyboardFunc(unsigned char key, int x, int y)
             Game::getInstance()->turn_ = currAliance == Board::Alliance::RED
                     ? Board::Alliance::BLUE
                     : Board::Alliance::RED;
-            glutPostRedisplay();
+            //glutPostRedisplay();
         }
     }
 }
@@ -288,11 +301,10 @@ void Game::highlightLastMove()
 
 void Game::highlightLegalMoves()
 {
-
     std::vector<Board::Move> lolm;
     Board::Alliance turn = Game::getInstance()->turn_;
     Game::getInstance()->board_.calcLegalMoves(turn, lolm);
-    for(auto m: lolm)
+    for(auto &m: lolm)
     {
         for(auto it = m.begin(); it != m.end(); ++it)
         {

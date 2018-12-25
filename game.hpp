@@ -62,6 +62,7 @@ private:
     void onMouseClick(int x, int y);
     void aiMove();
     static void display();
+    static void timer(int);
     static void mouse(int state, int button, int x, int y);
     static void keyboardFunc(unsigned char key, int x, int y);
     static void highlightLastMove();
