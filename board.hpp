@@ -143,6 +143,7 @@ public:
     int score() const;
     std::string toString();
     std::string tileToAlgebraicNotation(const Tile& tile);
+    std::string moveToAlgebraicNotation(const Move& move);
     const std::vector<Move>& getMoveLog() const;
     bool isEndGameScenario() const;
 
@@ -151,6 +152,7 @@ private:
     const int offsetX_[4] { +1, +1, -1, -1 };
     const int offsetY_[4] { -1, +1, +1, -1 };
     std::vector<Move> moveLog_;
+    std::map<int, std::string> algebraicNotaionFileMap;
 
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;

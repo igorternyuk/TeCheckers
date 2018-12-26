@@ -8,6 +8,14 @@ Board::Tile Board::NULL_TILE = Tile();
 
 Board::Board()
 {
+    algebraicNotaionFileMap[0] = "a";
+    algebraicNotaionFileMap[1] = "b";
+    algebraicNotaionFileMap[2] = "c";
+    algebraicNotaionFileMap[3] = "d";
+    algebraicNotaionFileMap[4] = "e";
+    algebraicNotaionFileMap[5] = "f";
+    algebraicNotaionFileMap[6] = "g";
+    algebraicNotaionFileMap[7] = "h";
     setupInitialPosition();
     moveLog_.clear();
 }
@@ -294,6 +302,14 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
 int Board::score() const
 {
     int score = 0;
+    std::vector<Move> redLegalMoves;
+    calcLegalMoves(Alliance::RED, redLegalMoves);
+    std::vector<Move> blueLegalMoves;
+    calcLegalMoves(Alliance::BLUE, blueLegalMoves);
+
+    score += redLegalMoves.size() * 10;
+    score -= blueLegalMoves.size() * 10;
+
     for(int y = 0; y < BOARD_SIZE; ++y)
     {
         for(int x = 0; x < BOARD_SIZE; ++x)
@@ -351,7 +367,25 @@ std::string Board::tileToAlgebraicNotation(const Board::Tile &tile)
     
     int x = tile.x;
     int y = tile.y;
-    
+    return algebraicNotaionFileMap[x] + std::to_string(BOARD_SIZE - y);
+}
+
+std::string Board::moveToAlgebraicNotation(const Board::Move &move)
+{
+    if(move.empty()) return "";
+    std::string notation = tileToAlgebraicNotation(move.at(0).start);
+    if(move.at(0).isJump())
+    {
+        for(auto &step: move)
+        {
+            notation += " : " + tileToAlgebraicNotation(step.end);
+        }
+    }
+    else
+    {
+        notation +=  " - " + tileToAlgebraicNotation(move.at(0).end);
+    }
+    return notation;
 }
 
 const std::vector<Board::Move> &Board::getMoveLog() const

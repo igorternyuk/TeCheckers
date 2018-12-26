@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 
 AlphaBeta::AlphaBeta(int depth):
@@ -31,13 +32,24 @@ Board::Move AlphaBeta::getBestMove(Board board)
 
     lolm.erase(it, lolm.end());
 
+    if(lolm.size() == 1)
+    {
+        std::cout << "Only one move available" << std::endl;
+        return lolm.at(0);
+    }
+
     int currVal = 0;
     Board::Move bestMove;
     auto human = Game::getInstance()->getHumanPlayer();
 
+    std::cout << "AI starts thinking eith depth = " << this->searchDepth_ << std::endl;
+    std::cout << "Legal moves count = " << lolm.size() << std::endl;
+    auto totalMoveTime = 0u;
     for(auto it = lolm.begin(); it != lolm.end(); ++it)
     {
+        std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
         board.makeMove(*it);
+        int currVal = 0;
         if(human == Board::Alliance::RED)
         {
             currVal = min(board, this->searchDepth_, alpha, beta);
@@ -66,10 +78,17 @@ Board::Move AlphaBeta::getBestMove(Board board)
                 }
             }
         }
+        std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
         //board.undoLastMove();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        totalMoveTime += elapsed;
+        std::cout << "Analyzed move " + board.moveToAlgebraicNotation(*it)
+                  << " Score: " << currVal << " Time taken: "
+                  << elapsed << "ms" << std::endl;
     }
     std::cout << "boardEvaluated_ = " << boardEvaluated_ << std::endl;
     std::cout << "cutoffsProduced_ = " << cutoffsProduced_ << std::endl;
+    std::cout << "Total move time = " << totalMoveTime << "ms" << std::endl;
     return bestMove;
 }
 
