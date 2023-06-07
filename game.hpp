@@ -3,8 +3,6 @@
 
 #include "board.hpp"
 #include "alphabeta.hpp"
-#include "painter.hpp"
-#include <thread>
 
 class Game
 {    
@@ -64,6 +62,7 @@ private:
     static void display();
     static void timer(int);
     static void mouse(int state, int button, int x, int y);
+    static void move_ai();
     static void keyboardFunc(unsigned char key, int x, int y);
     static void highlightLastMove();
     static void highlightLegalMoves();

@@ -7,7 +7,7 @@
 class AlphaBeta
 {
 public:
-    explicit AlphaBeta(int depth = 6);
+    explicit AlphaBeta(int depth = 8);
     Board::Move getBestMove(Board board);
 private:
     int searchDepth_;
@@ -15,7 +15,6 @@ private:
     int cutoffsProduced_;
     int max(Board board, int depth, int alpha, int beta);
     int min(Board board, int depth, int alpha, int beta);
-    int calcQuiescenceDepth(Board board, int depth);
     bool isSubset(std::vector<Board::Step> &first, std::vector<Board::Step> &second);
 };
 

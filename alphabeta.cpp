@@ -6,6 +6,8 @@
 #include <chrono>
 #include <iostream>
 
+constexpr int INF = 10000000;
+
 AlphaBeta::AlphaBeta(int depth):
     searchDepth_(depth)
 {}
@@ -13,8 +15,6 @@ AlphaBeta::AlphaBeta(int depth):
 Board::Move AlphaBeta::getBestMove(Board board)
 {
     Board::Move move;
-    int alpha = -1000000;
-    int beta = +1000000;
     auto computer = Game::getInstance()->getAiPlayer();
     std::vector<Board::Move> lolm;
     board.calcLegalMoves(computer, lolm);
@@ -38,21 +38,48 @@ Board::Move AlphaBeta::getBestMove(Board board)
         return lolm.at(0);
     }
 
-    int currVal = 0;
     Board::Move bestMove;
     auto human = Game::getInstance()->getHumanPlayer();
 
-    std::cout << "AI starts thinking eith depth = " << this->searchDepth_ << std::endl;
+    std::cout << "AI starts thinking with depth = " << this->searchDepth_ << std::endl;
     std::cout << "Legal moves count = " << lolm.size() << std::endl;
     auto totalMoveTime = 0u;
-    for(auto it = lolm.begin(); it != lolm.end(); ++it)
+    int alpha = -INF;
+    int beta = +INF;
+    if(human == Board::Alliance::RED) // CPU is minimizing player
     {
-        std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-        board.makeMove(*it);
-        int currVal = 0;
-        if(human == Board::Alliance::RED)
+        int minVal = INF;
+        for(auto it = lolm.begin(); it != lolm.end(); ++it)
         {
-            currVal = min(board, this->searchDepth_, alpha, beta);
+            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+            board.makeMove(*it); //CPU make the move
+            int currVal = max(board, this->searchDepth_, alpha, beta);
+            //beta = std::min(beta, minVal);
+            if(currVal < minVal)
+            {
+                bestMove = *it;
+                minVal = std::min(currVal, minVal);
+                if(board.isEndGameScenario())
+                    break;
+            }
+
+            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+            //board.undoLastMove();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            totalMoveTime += elapsed;
+            std::cout << "Analyzed move " + board.moveToAlgebraicNotation(*it)
+                      << " Score: " << currVal << " Time taken: "
+                      << elapsed << "ms" << std::endl;
+        }
+    }
+    else if(human == Board::Alliance::BLUE)
+    {
+        int currVal = INF;
+        for(auto it = lolm.begin(); it != lolm.end(); ++it)
+        {
+            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+            board.makeMove(*it);
+            currVal = max(board, this->searchDepth_, alpha, beta);
             if(currVal > alpha)
             {
                 alpha = currVal;
@@ -63,32 +90,22 @@ Board::Move AlphaBeta::getBestMove(Board board)
                     break;
                 }
             }
+
+            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+            //board.undoLastMove();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            totalMoveTime += elapsed;
+            std::cout << "Analyzed move " + board.moveToAlgebraicNotation(*it)
+                      << " Score: " << currVal << " Time taken: "
+                      << elapsed << "ms" << std::endl;
         }
-        else if(human == Board::Alliance::BLUE)
-        {
-            currVal = max(board, this->searchDepth_, alpha, beta);
-            if(currVal < beta)
-            {
-                beta = currVal;
-                bestMove = *it;
-                if(board.isEndGameScenario())
-                {
-                    //board.undoLastMove();
-                    break;
-                }
-            }
-        }
-        std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-        //board.undoLastMove();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        totalMoveTime += elapsed;
-        std::cout << "Analyzed move " + board.moveToAlgebraicNotation(*it)
-                  << " Score: " << currVal << " Time taken: "
-                  << elapsed << "ms" << std::endl;
     }
+
     std::cout << "boardEvaluated_ = " << boardEvaluated_ << std::endl;
     std::cout << "cutoffsProduced_ = " << cutoffsProduced_ << std::endl;
+    std::cout << "Best move  = " + board.moveToAlgebraicNotation(bestMove) << std::endl;
     std::cout << "Total move time = " << totalMoveTime << "ms" << std::endl;
+
     return bestMove;
 }
 
@@ -97,22 +114,25 @@ int AlphaBeta::max(Board board, int depth, int alpha, int beta)
     if(depth == 0 || board.isEndGameScenario())
     {
         ++boardEvaluated_;
-        return board.score();
+        int score = board.score();
+        return score;
     }
+    int value = -INF;
     std::vector<Board::Move> lolm; // list of legal moves
     board.calcLegalMoves(Board::Alliance::RED, lolm);
     for(auto it = lolm.begin(); it != lolm.end(); ++it)
     {
         board.makeMove(*it);
-        alpha = std::max(alpha, min(board, calcQuiescenceDepth(board, depth), alpha, beta));
-        if(alpha > beta)
+        value = std::max(value, min(board, depth - 1, alpha, beta));
+        if(value > beta)
         {
             ++cutoffsProduced_;
             break;
         }
+        alpha = std::max(alpha, value);
         //board.undoLastMove();
     }
-    return alpha;
+    return value;
 }
 
 int AlphaBeta::min(Board board, int depth, int alpha, int beta)
@@ -120,27 +140,25 @@ int AlphaBeta::min(Board board, int depth, int alpha, int beta)
     if(depth == 0 || board.isEndGameScenario())
     {
         ++boardEvaluated_;
-        return board.score();
+        int score = board.score();
+        return score;
     }
+
+    int value = INF;
     std::vector<Board::Move> lolm; // list of legal moves
     board.calcLegalMoves(Board::Alliance::BLUE, lolm);
     for(auto it = lolm.begin(); it != lolm.end(); ++it)
     {
         board.makeMove(*it);
-        beta = std::min(beta, max(board, calcQuiescenceDepth(board, depth), alpha, beta));
-        if(beta < alpha)
+        value = std::min(value, max(board, depth - 1, alpha, beta));
+        if(value < alpha)
         {
             ++cutoffsProduced_;
             break;
         }
-        //board.undoLastMove();
+        beta = std::min(beta, value);
     }
-    return beta;
-}
-
-int AlphaBeta::calcQuiescenceDepth(Board board, int depth)
-{
-    return depth - 1;
+    return value;
 }
 
 bool AlphaBeta::isSubset(std::vector<Board::Step> &first, std::vector<Board::Step> &second)

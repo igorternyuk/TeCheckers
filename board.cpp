@@ -6,16 +6,23 @@
 
 Board::Tile Board::NULL_TILE = Tile();
 
+static const int offsetX_[4] { +1, +1, -1, -1 };
+static const int offsetY_[4] { -1, +1, +1, -1 };
+static std::map<int, std::string> algebraicNotaionFileMap
+{
+    { 0, "a"},
+    { 1, "b"},
+    { 2, "c"},
+    { 3, "d"},
+    { 4, "e"},
+    { 5, "f"},
+    { 6, "g"},
+    { 7, "h"}
+};
+
 Board::Board()
 {
-    algebraicNotaionFileMap[0] = "a";
-    algebraicNotaionFileMap[1] = "b";
-    algebraicNotaionFileMap[2] = "c";
-    algebraicNotaionFileMap[3] = "d";
-    algebraicNotaionFileMap[4] = "e";
-    algebraicNotaionFileMap[5] = "f";
-    algebraicNotaionFileMap[6] = "g";
-    algebraicNotaionFileMap[7] = "h";
+
     setupInitialPosition();
     moveLog_.clear();
 }
@@ -307,8 +314,8 @@ int Board::score() const
     std::vector<Move> blueLegalMoves;
     calcLegalMoves(Alliance::BLUE, blueLegalMoves);
 
-    score += redLegalMoves.size() * 10;
-    score -= blueLegalMoves.size() * 10;
+    score += redLegalMoves.size();
+    score -= blueLegalMoves.size();
 
     for(int y = 0; y < BOARD_SIZE; ++y)
     {
@@ -320,10 +327,16 @@ int Board::score() const
                 if(currTile.piece.alliance == Alliance::RED)
                 {
                     score += currTile.piece.value;
+                    score += (BOARD_SIZE - y);
+                    if(x == 0 || x == BOARD_SIZE)
+                        score -= currTile.piece.value / 2;
                 }
-                else if(currTile.piece.alliance == Alliance::RED)
+                else if(currTile.piece.alliance == Alliance::BLUE)
                 {
                     score -= currTile.piece.value;
+                    score -= (y + 1);
+                    if(x == 0 || x == BOARD_SIZE)
+                        score += currTile.piece.value / 2;
                 }
             }
         }

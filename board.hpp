@@ -15,7 +15,7 @@ public:
         BOARD_SIZE = 8,
         NUM_CHECKER_ROW_FOR_ONE_SIDE = 3,
         CHECKER_SCORE = 100,
-        KING_SCORE = 200
+        KING_SCORE = 300
     };
 
     enum class Alliance
@@ -149,10 +149,7 @@ public:
 
 private:
     Tile grid_[BOARD_SIZE][BOARD_SIZE];
-    const int offsetX_[4] { +1, +1, -1, -1 };
-    const int offsetY_[4] { -1, +1, +1, -1 };
     std::vector<Move> moveLog_;
-    std::map<int, std::string> algebraicNotaionFileMap;
 
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;

@@ -1,8 +1,8 @@
 #include "game.hpp"
+#include "painter.hpp"
 #include <GL/glut.h>
 #include <iostream>
 #include <algorithm>
-#include <thread>
 #include <iostream>
 
 Game *Game::getInstance()
@@ -68,9 +68,9 @@ void Game::onMouseClick(int x, int y)
                 if(status_ != GameStatus::PLAY)
                 {
                     return;
-                }
-
+                }                
                 std::cout << "Move done" << std::endl;
+
             }
             else if(moveStatus == MoveStatus::JUMP_SEQUENCE)
             {
@@ -210,13 +210,13 @@ void Game::run(int argc, char *argv[])
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     glutInitWindowPosition((1366 - WINDOW_WIDTH) / 2, (768 - WINDOW_HEIGHT) / 2);
-    glutCreateWindow("Checkers");
+    glutCreateWindow("Draughts64");
     glClearColor(0,0,0,0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0,WINDOW_WIDTH,WINDOW_HEIGHT,0,-1,1);    
     glutDisplayFunc(&Game::display);
-    glutMouseFunc(&Game::mouse);
+    glutMouseFunc(&Game::mouse);    
     glutTimerFunc(500, &Game::timer, 0);
     glutKeyboardFunc(&Game::keyboardFunc);
     glutMainLoop();
@@ -226,19 +226,18 @@ void Game::display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     Painter::drawBoard(Game::getInstance()->getBoard());
-    highlightLegalMoves();
+    GameStatus status = Game::getInstance()->status_;
+    if(status == Game::GameStatus::PLAY)
+        highlightLegalMoves();
     highlightLastMove();
     drawGameStatus();
-    /*Board::Alliance turn = Game::getInstance()->turn_;
-    if(turn == Board::Alliance::RED)
-    {
-        std::cout << "Red's turn" << std::endl;
-    }
-    else if(turn == Board::Alliance::BLUE)
-    {
-        std::cout << "Blue's turn" << std::endl;
-    }*/
     glutSwapBuffers();
+    Board::Alliance turn = Game::getInstance()->turn_;
+    if(turn == Board::Alliance::BLUE)
+    {
+        std::cout << "CPU starts thinking ..." << std::endl;
+        Game::move_ai();
+    }
 }
 
 void Game::timer(int)
@@ -254,15 +253,19 @@ void Game::mouse(int button, int state, int x, int y)
         int mx = x / SIDE;
         int my = y / SIDE;
         std::cout << "mx = " << mx << " my = " << my << std::endl;
-        Game::getInstance()->onMouseClick(mx, my);        
-        if(Game::getInstance()->getAiPlayer() == Game::getInstance()->turn_)
+        Game::getInstance()->onMouseClick(mx, my);
+        /*if(Game::getInstance()->getAiPlayer() == Game::getInstance()->turn_)
         {
-            std::thread thinking([](){
-                Game::getInstance()->aiMove();
-            });
-            thinking.detach();
-        }
-        //glutPostRedisplay();
+            Game::getInstance()->aiMove();
+        }*/
+    }
+}
+
+void Game::move_ai()
+{
+    if(Game::getInstance()->getAiPlayer() == Game::getInstance()->turn_)
+    {
+        Game::getInstance()->aiMove();
     }
 }
 
@@ -271,7 +274,6 @@ void Game::keyboardFunc(unsigned char key, int x, int y)
     if(key == 13)
     {
         Game::getInstance()->startNewGame();
-        //glutPostRedisplay();
     }
     else if(key == ' ')
     {
@@ -285,7 +287,6 @@ void Game::keyboardFunc(unsigned char key, int x, int y)
             Game::getInstance()->turn_ = currAliance == Board::Alliance::RED
                     ? Board::Alliance::BLUE
                     : Board::Alliance::RED;
-            //glutPostRedisplay();
         }
     }
 }
