@@ -277,7 +277,7 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
                     Move oldMove = move;
                     move.push_back(step);
                     Piece p = Piece(current.x, current.y, piece.alliance, false);
-                    if(checkCrown(p) || piece.isKing)
+                    if(checkCrown(p) /*|| piece.isKing*/)
                     {
                         p.crown();
                     }
@@ -314,9 +314,15 @@ int Board::score() const
     std::vector<Move> blueLegalMoves;
     calcLegalMoves(Alliance::BLUE, blueLegalMoves);
 
-    score += redLegalMoves.size();
-    score -= blueLegalMoves.size();
+    /*if(redLegalMoves.empty())
+        return -10000;
+    if(blueLegalMoves.empty())
+        return 10000;*/
+    score += 10*redLegalMoves.size();
+    score -= 10*blueLegalMoves.size();
 
+    int num_red_kings = 0;
+    int num_blue_kings = 0;
     for(int y = 0; y < BOARD_SIZE; ++y)
     {
         for(int x = 0; x < BOARD_SIZE; ++x)
@@ -326,21 +332,47 @@ int Board::score() const
             {
                 if(currTile.piece.alliance == Alliance::RED)
                 {
+                    if(currTile.piece.isKing)
+                        num_red_kings++;
                     score += currTile.piece.value;
                     score += (BOARD_SIZE - y);
                     if(x == 0 || x == BOARD_SIZE)
                         score -= currTile.piece.value / 2;
+
+                    //retrasadas
+                    if(x == 0 && y == BOARD_SIZE - 1)
+                        score -= currTile.piece.value / 2;
+                    else if(x == BOARD_SIZE -1 && y == BOARD_SIZE - 2)
+                        score -= currTile.piece.value / 2;
+
+                    //golden piece
+                    if(x == BOARD_SIZE / 2 && y == BOARD_SIZE - 1)
+                        score += 3 * currTile.piece.value;
                 }
                 else if(currTile.piece.alliance == Alliance::BLUE)
                 {
+                    if(currTile.piece.isKing)
+                        num_red_kings--;
                     score -= currTile.piece.value;
                     score -= (y + 1);
                     if(x == 0 || x == BOARD_SIZE)
                         score += currTile.piece.value / 2;
+
+                    //retrasadas
+                    if(x == BOARD_SIZE - 1 && y == 0)
+                        score += currTile.piece.value / 2;
+                    else if(x == 0 && y == 1)
+                        score += currTile.piece.value / 2;
+
+                    //golden piece
+                    if(x == BOARD_SIZE / 2 - 1 && y == 0)
+                        score -= 3 * currTile.piece.value;
                 }
             }
         }
     }
+
+    score += 10 * (num_red_kings - num_blue_kings);
     return score;
 }
 

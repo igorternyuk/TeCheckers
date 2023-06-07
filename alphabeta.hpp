@@ -7,7 +7,7 @@
 class AlphaBeta
 {
 public:
-    explicit AlphaBeta(int depth = 8);
+    explicit AlphaBeta(int depth = 13);
     Board::Move getBestMove(Board board);
 private:
     int searchDepth_;

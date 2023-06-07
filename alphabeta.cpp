@@ -124,12 +124,12 @@ int AlphaBeta::max(Board board, int depth, int alpha, int beta)
     {
         board.makeMove(*it);
         value = std::max(value, min(board, depth - 1, alpha, beta));
-        if(value > beta)
+        alpha = std::max(alpha, value);
+        if(value >= beta)
         {
             ++cutoffsProduced_;
             break;
-        }
-        alpha = std::max(alpha, value);
+        }        
         //board.undoLastMove();
     }
     return value;
@@ -151,12 +151,12 @@ int AlphaBeta::min(Board board, int depth, int alpha, int beta)
     {
         board.makeMove(*it);
         value = std::min(value, max(board, depth - 1, alpha, beta));
-        if(value < alpha)
+        beta = std::min(beta, value);
+        if(value <= alpha)
         {
             ++cutoffsProduced_;
             break;
         }
-        beta = std::min(beta, value);
     }
     return value;
 }
