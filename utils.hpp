@@ -1,5 +1,4 @@
-#ifndef PAINTER_HPP
-#define PAINTER_HPP
+#pragma once
 
 #include "board.hpp"
 
@@ -19,10 +18,10 @@ struct Color
     }*/
 };
 
-class Painter
+class Utils
 {
 public:
-    explicit Painter();
+    explicit Utils();
     static void drawMoveStep(const Board::Step &step, Color color);
     static void drawFilledRect(float x, float y, float side, Color color = {255,255,255});
     static void drawPolygon(float centerX, float centerY, float radius, int numSides = 5,
@@ -32,6 +31,5 @@ public:
                    Color lightCells = {255,255,255});
     static void drawBoard(const Board& board);
     static void drawWord(char *word, float x_, float y_, float space, Color color);
+    static std::vector<std::string> split(const std::string& input, const std::string& token);
 };
-
-#endif // PAINTER_HPP

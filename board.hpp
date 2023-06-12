@@ -1,10 +1,10 @@
-#ifndef BOARD_HPP
-#define BOARD_HPP
+#pragma once
 
 #include <vector>
 #include <map>
 #include <string>
 #include <cmath>
+#include "gamestatus.hpp"
 
 class Board
 {
@@ -109,6 +109,7 @@ public:
     {
         Tile start, end;
         Piece captured;
+        bool IsCoronation = false;
         Step(Tile start, Tile end, Piece captured = Piece()):
             start(start), end(end), captured(captured)
         {}
@@ -131,7 +132,7 @@ public:
 
     using Move = std::vector<Step>;
 
-    void setupInitialPosition();
+    void Reset();
     bool isValidTile(int x, int y) const;
     bool isTileEmpty(int x, int y) const;
     Tile getTile(int x, int y) const;
@@ -145,15 +146,25 @@ public:
     std::string tileToAlgebraicNotation(const Tile& tile);
     std::string moveToAlgebraicNotation(const Move& move);
     const std::vector<Move>& getMoveLog() const;
+    GameStatus GetGameStatus() const;
     bool isEndGameScenario() const;
+    std::string CalcHash() const;
+    int GetTotalPieces() const;
 
 private:
-    Tile grid_[BOARD_SIZE][BOARD_SIZE];
-    std::vector<Move> moveLog_;
-
     void clearBoard();
     bool isFriendlyCell(Tile cell, Alliance alliance) const;
-    bool checkCrown(const Piece &piece) const;    
-};
+    bool checkCrown(const Piece &piece) const;
+    void CalcPieceCount(int& count_red_pieces, int& count_red_kings, int& count_blue_pieces, int& count_blue_kings) const;
 
-#endif // BOARD_HPP
+private:
+    Tile _grid[BOARD_SIZE][BOARD_SIZE];
+    std::vector<Move> _moveLog;
+    int count23 = 0; // 2-3 piece ending limit 5 moves
+    int count45 = 0; // 4-5 piece ending limit 30 moves
+    int count67 = 0; // 6-7 piece ending limit 60 moves
+    int count15 = 0;
+    int oldBalance = 0;
+    std::string _hash;
+    std::map<std::string, int> _mapRep;
+};

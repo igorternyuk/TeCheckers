@@ -1,5 +1,5 @@
 #include "game.hpp"
-#include "painter.hpp"
+#include "utils.hpp"
 #include <GL/glut.h>
 #include <iostream>
 #include <algorithm>
@@ -16,32 +16,32 @@ Game::Game()
 
 Board::Alliance Game::getAiPlayer() const
 {
-    return aiPlayer_;
+    return _aiPlayer;
 }
 
 Board::Alliance Game::getCurrentPlayer() const
 {
-    return turn_;
+    return _turn;
 }
 
 Board::Alliance Game::getHumanPlayer() const
 {
-    return humanPlayer_;
+    return _humanPlayer;
 }
 
 const Board &Game::getBoard() const
 {
-    return board_;
+    return _board;
 }
 
 void Game::onMouseClick(int x, int y)
 {
-    if(status_ != GameStatus::PLAY || turn_ != humanPlayer_)
+    if(_board.GetGameStatus() != GameStatus::PLAY || _turn != _humanPlayer)
     {
         std::cout << "It is not your turn" << std::endl;
         return;
     }
-    if(selected_.x == -1)
+    if(_selected.x == -1)
     {
         selectTile(x,y);
         std::cout << "Selecting the first tile" << std::endl;
@@ -57,7 +57,7 @@ void Game::onMouseClick(int x, int y)
         }
         else
         {
-            auto log = board_.getMoveLog();
+            auto log = _board.getMoveLog();
             lastMove_ = log.at(log.size() - 1);
             if(moveStatus == MoveStatus::REGULAR_MOVE || moveStatus == MoveStatus::SINGLE_JUMP)
             {
@@ -65,7 +65,7 @@ void Game::onMouseClick(int x, int y)
                 checkGameStatus();
                 unselect();
 
-                if(status_ != GameStatus::PLAY)
+                if(_board.GetGameStatus() != GameStatus::PLAY)
                 {
                     return;
                 }                
@@ -84,22 +84,30 @@ void Game::onMouseClick(int x, int y)
 
 void Game::aiMove()
 {
-    auto bestMove = ai_.getBestMove(board_);
-    board_.makeMove(bestMove);
+    std::string hash = getBoard().CalcHash();
+    Board::Move bestMove;
+    if(_mapBestMoves.find(hash) != _mapBestMoves.end())
+        bestMove = _mapBestMoves[hash];
+    else
+    {
+        bestMove = _ai.getBestMove(_board);
+         _mapBestMoves[hash] = bestMove;
+    }
+    _board.makeMove(bestMove);
     lastMove_ = bestMove;
     switchTurn();
-    //glutPostRedisplay();
+    checkGameStatus();
 }
 
 void Game::selectTile(int x, int y)
 {
-    if(board_.isValidTile(x,y))
+    if(_board.isValidTile(x,y))
     {
-        Board::Tile tile = board_.getTile(x,y);
+        Board::Tile tile = _board.getTile(x,y);
         if(tile.isDark() && tile.hasPiece()
-                && tile.piece.alliance == this->turn_)
+                && tile.piece.alliance == this->_turn)
         {
-            selected_ = tile;
+            _selected = tile;
         }
     }
     else
@@ -110,13 +118,13 @@ void Game::selectTile(int x, int y)
 
 void Game::unselect()
 {
-    selected_ = Board::NULL_TILE;
-    selected_.x = -1;
+    _selected = Board::NULL_TILE;
+    _selected.x = -1;
 }
 
 void Game::checkGameStatus()
 {
-    std::vector<Board::Move> legalMoves;
+    /*std::vector<Board::Move> legalMoves;
     board_.calcLegalMoves(this->turn_, legalMoves);
     if(legalMoves.empty())
     {
@@ -128,59 +136,59 @@ void Game::checkGameStatus()
         {
             this->status_ = GameStatus::RED_WON;
         }
-    }
+    }*/
 }
 
 void Game::switchTurn()
 {
-    if(this->turn_ == Board::Alliance::RED)
+    if(this->_turn == Board::Alliance::RED)
     {
-        this->turn_ = Board::Alliance::BLUE;
+        this->_turn = Board::Alliance::BLUE;
     }
-    else if(this->turn_ == Board::Alliance::BLUE)
+    else if(this->_turn == Board::Alliance::BLUE)
     {
-        this->turn_ = Board::Alliance::RED;
+        this->_turn = Board::Alliance::RED;
     }
 }
 
 void Game::startNewGame()
 {
-    board_.setupInitialPosition();
-    status_ = GameStatus::PLAY;
-    turn_ = Board::Alliance::RED;
+    _board.Reset();
+    //status_ = GameStatus::PLAY;
+    _turn = Board::Alliance::RED;
     lastMove_.clear();
 }
 
 void Game::printBoard()
 {
     std::cout << "//////////// BOARD ////////////" << std::endl;
-    std::cout << board_.toString() << std::endl;
+    std::cout << _board.toString() << std::endl;
     std::cout << "///////////////////////////////" << std::endl;
 }
 
 Game::MoveStatus Game::tryToMove(int x, int y)
 {
-    if(board_.isValidTile(x,y))
+    if(_board.isValidTile(x,y))
     {
-        Board::Tile endTile = board_.getTile(x,y);
+        Board::Tile endTile = _board.getTile(x,y);
         if(endTile.isLight())
         {
             return MoveStatus::ILLEGAL_MOVE;
         }
         std::vector<Board::Move> legalMoves;
-        board_.calcLegalMoves(this->turn_, legalMoves);
-        std::cout << "legalMoves.size() = " << legalMoves.size() << " for " << static_cast<int>(turn_) << std::endl;
+        _board.calcLegalMoves(this->_turn, legalMoves);
+        std::cout << "legalMoves.size() = " << legalMoves.size() << " for " << static_cast<int>(_turn) << std::endl;
         std::vector<Board::Move> filtred(legalMoves.size());
         auto it = std::copy_if(legalMoves.begin(), legalMoves.end(), filtred.begin(),
                      [&](const Board::Move & move){
                         Board::Step firstStep = move.at(0);
-                        return firstStep.start == selected_ && firstStep.end == endTile;
+                        return firstStep.start == _selected && firstStep.end == endTile;
                      });
         filtred.resize(std::distance(filtred.begin(), it));
         if(!filtred.empty())
         {
             Board::Move move = filtred.at(0);
-            if(board_.makeMove(move))
+            if(_board.makeMove(move))
             {
                 printBoard();
                 std::cout << "DONE" << std::endl;
@@ -208,8 +216,10 @@ void Game::run(int argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    int w = glutGet(GLUT_SCREEN_WIDTH);
+    int h = glutGet(GLUT_SCREEN_HEIGHT);
     glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    glutInitWindowPosition((1366 - WINDOW_WIDTH) / 2, (768 - WINDOW_HEIGHT) / 2);
+    glutInitWindowPosition((w - WINDOW_WIDTH) / 2, (h - WINDOW_HEIGHT) / 2);
     glutCreateWindow("Draughts64");
     glClearColor(0,0,0,0);
     glMatrixMode(GL_PROJECTION);
@@ -225,14 +235,14 @@ void Game::run(int argc, char *argv[])
 void Game::display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    Painter::drawBoard(Game::getInstance()->getBoard());
-    GameStatus status = Game::getInstance()->status_;
-    if(status == Game::GameStatus::PLAY)
+    Utils::drawBoard(Game::getInstance()->getBoard());
+    GameStatus status = Game::getInstance()->getBoard().GetGameStatus();
+    if(status == GameStatus::PLAY)
         highlightLegalMoves();
     highlightLastMove();
     drawGameStatus();
     glutSwapBuffers();
-    Board::Alliance turn = Game::getInstance()->turn_;
+    Board::Alliance turn = Game::getInstance()->_turn;
     if(turn == Board::Alliance::BLUE)
     {
         std::cout << "CPU starts thinking ..." << std::endl;
@@ -263,7 +273,7 @@ void Game::mouse(int button, int state, int x, int y)
 
 void Game::move_ai()
 {
-    if(Game::getInstance()->getAiPlayer() == Game::getInstance()->turn_)
+    if(Game::getInstance()->getAiPlayer() == Game::getInstance()->_turn)
     {
         Game::getInstance()->aiMove();
     }
@@ -278,13 +288,13 @@ void Game::keyboardFunc(unsigned char key, int x, int y)
     else if(key == ' ')
     {
         std::cout << "Last move undo" << std::endl;
-        auto log = Game::getInstance()->board_.getMoveLog();
+        auto log = Game::getInstance()->_board.getMoveLog();
         if(!log.empty())
         {
             auto currAliance = log.at(log.size() - 1).at(0).end.piece.alliance;
-            Game::getInstance()->board_.undoLastMove();
+            Game::getInstance()->_board.undoLastMove();
             Game::getInstance()->unselect();
-            Game::getInstance()->turn_ = currAliance == Board::Alliance::RED
+            Game::getInstance()->_turn = currAliance == Board::Alliance::RED
                     ? Board::Alliance::BLUE
                     : Board::Alliance::RED;
         }
@@ -296,41 +306,45 @@ void Game::highlightLastMove()
     Board::Move lastMove = Game::getInstance()->lastMove_;
     for(auto it = lastMove.begin(); it != lastMove.end(); ++it)
     {
-        Painter::drawMoveStep(*it, {211,204,0});
+        Utils::drawMoveStep(*it, {211,204,0});
     }
 }
 
 void Game::highlightLegalMoves()
 {
     std::vector<Board::Move> lolm;
-    Board::Alliance turn = Game::getInstance()->turn_;
-    Game::getInstance()->board_.calcLegalMoves(turn, lolm);
+    Board::Alliance turn = Game::getInstance()->_turn;
+    Game::getInstance()->_board.calcLegalMoves(turn, lolm);
     for(auto &m: lolm)
     {
         for(auto it = m.begin(); it != m.end(); ++it)
         {
-            Painter::drawMoveStep(*it, {0,255,0});
+            Utils::drawMoveStep(*it, {0,255,0});
         }
     }
 }
 
 void Game::drawGameStatus()
 {
-    GameStatus status = Game::getInstance()->status_;
-    if(status == Game::GameStatus::PLAY)
+    GameStatus status = Game::getInstance()->getBoard().GetGameStatus();
+    if(status == GameStatus::PLAY)
     {
-        Painter::drawWord("PLAY", 5, 20, 20, {127,0,0});
+        Board::Alliance turn = Game::getInstance()->_turn;
+        if(turn == Board::Alliance::RED)
+            Utils::drawWord("REDS TO PLAY", 5, 20, 20, {255,0,0});
+        else if(turn == Board::Alliance::BLUE)
+            Utils::drawWord("BLUES TO PLAY", 5, 20, 20, {0,0,255});
     }
-    else if(status == Game::GameStatus::RED_WON)
+    else if(status == GameStatus::RED_WON)
     {
-        Painter::drawWord("RED WON!", 5, 20, 20, {127,0,0});
+        Utils::drawWord("RED PLAYER WON!", 5, 20, 20, {255,0,0});
     }
-    else if(status == Game::GameStatus::BLUE_WON)
+    else if(status == GameStatus::BLUE_WON)
     {
-        Painter::drawWord("BLUE WON!", 5, 20, 20, {127,0,0});
+        Utils::drawWord("BLUE PLAYER WON!", 5, 20, 20, {0,0,255});
     }
-    else if(status == Game::GameStatus::DRAW)
+    else if(status == GameStatus::DRAW)
     {
-        Painter::drawWord("DRAW!", 5, 20, 20, {127,0,0});
+        Utils::drawWord("DRAW!", 5, 20, 20, {0,127,0});
     }
 }

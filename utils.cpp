@@ -1,14 +1,14 @@
-#include "painter.hpp"
+#include "utils.hpp"
 #include "game.hpp"
 #include <GL/glut.h>
 //#include <GL/gl.h>
 #include <cmath>
 #include <cstring>
 
-Painter::Painter()
+Utils::Utils()
 {}
 
-void Painter::drawPolygon(float centerX, float centerY, float radius,
+void Utils::drawPolygon(float centerX, float centerY, float radius,
                           int numSides, Color color)
 {
     glColor3f(color.red / 255.f, color.green / 255.f, color.blue / 255.f);
@@ -22,7 +22,7 @@ void Painter::drawPolygon(float centerX, float centerY, float radius,
     glEnd();
 }
 
-void Painter::drawEmptyBoard(int topLeftX, int topLeftY, int boardSize,
+void Utils::drawEmptyBoard(int topLeftX, int topLeftY, int boardSize,
                         int side, Color darkCells, Color lightCells)
 {
     for(int y = 0; y < boardSize; ++y)
@@ -43,7 +43,7 @@ void Painter::drawEmptyBoard(int topLeftX, int topLeftY, int boardSize,
     }
 }
 
-void Painter::drawBoard(const Board &board)
+void Utils::drawBoard(const Board &board)
 {
     const int cellSize = 60;
     drawEmptyBoard(0,0,Board::BOARD_SIZE, cellSize, {94,177,78}, {255,255,255});
@@ -104,7 +104,7 @@ void Painter::drawBoard(const Board &board)
     }
 }
 
-void Painter::drawMoveStep(const Board::Step &step, Color color)
+void Utils::drawMoveStep(const Board::Step &step, Color color)
 {
     double x1 = step.start.x * Game::SIDE + Game::SIDE / 2;
     double y1 = step.start.y * Game::SIDE + Game::SIDE / 2;
@@ -135,7 +135,7 @@ void Painter::drawMoveStep(const Board::Step &step, Color color)
     glLineWidth(1);
 }
 
-void Painter::drawFilledRect(float x, float y, float side, Color color)
+void Utils::drawFilledRect(float x, float y, float side, Color color)
 {
     glColor3f(color.red / 255.f, color.green / 255.f, color.blue / 255.f);
     glBegin(GL_QUADS);
@@ -146,7 +146,7 @@ void Painter::drawFilledRect(float x, float y, float side, Color color)
     glEnd();
 }
 
-void Painter::drawWord(char *word, float x_, float y_, float space, Color color)
+void Utils::drawWord(char *word, float x_, float y_, float space, Color color)
 {
     glColor3f(color.red / 255.f, color.green / 255.f, color.blue / 255.f);
     for(unsigned int i = 0; i < strlen(word); ++i)
@@ -155,4 +155,26 @@ void Painter::drawWord(char *word, float x_, float y_, float space, Color color)
         char ch = word[i];
         glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, (int)ch);
     }
+}
+
+std::vector<std::string> Utils::split(const std::string &input, const std::string &token)
+{
+    std::vector<std::string>result;
+    std::string str = input;
+    while(str.size())
+    {
+        int index = str.find(token);
+        if(index != std::string::npos)
+        {
+            result.push_back(str.substr(0,index));
+            str = str.substr(index+token.size());
+            if(str.size()==0)result.push_back(str);
+        }
+        else
+        {
+            result.push_back(str);
+            str = "";
+        }
+    }
+    return result;
 }

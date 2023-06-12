@@ -1,5 +1,4 @@
-﻿#ifndef GAME_HPP
-#define GAME_HPP
+﻿#pragma once
 
 #include "board.hpp"
 #include "alphabeta.hpp"
@@ -27,13 +26,6 @@ private:
     Game& operator=(const Game& game) = delete;
     Game& operator=(Game&& game) = delete;
 
-    enum class GameStatus
-    {
-        RED_WON,
-        BLUE_WON,
-        DRAW,
-        PLAY
-    };
     enum class MoveStatus
     {
         REGULAR_MOVE,
@@ -41,14 +33,9 @@ private:
         JUMP_SEQUENCE,
         ILLEGAL_MOVE
     };
-    Board board_;
-    AlphaBeta ai_;
-    Board::Alliance turn_ = Board::Alliance::RED;
-    Board::Alliance humanPlayer_ = Board::Alliance::RED;
-    Board::Alliance aiPlayer_ = Board::Alliance::BLUE;
-    Board::Tile& selected_ = Board::NULL_TILE;
-    Board::Move lastMove_;
-    GameStatus status_ = GameStatus::PLAY;
+
+private:
+
     const Board &getBoard() const;
     void selectTile(int x, int y);
     void unselect();
@@ -68,8 +55,15 @@ private:
     static void highlightLegalMoves();
     static void drawGameStatus();
     static void drawMove(const Board::Move& move);
+
+private:
+
+    Board _board;
+    AlphaBeta _ai;
+    Board::Alliance _turn = Board::Alliance::RED;
+    Board::Alliance _humanPlayer = Board::Alliance::RED;
+    Board::Alliance _aiPlayer = Board::Alliance::BLUE;
+    Board::Tile& _selected = Board::NULL_TILE;
+    Board::Move lastMove_;
+    std::map<std::string, Board::Move> _mapBestMoves;
 };
-
-
-
-#endif // GAME_HPP

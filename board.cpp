@@ -23,11 +23,11 @@ static std::map<int, std::string> algebraicNotaionFileMap
 Board::Board()
 {
 
-    setupInitialPosition();
-    moveLog_.clear();
+    Reset();
+    _moveLog.clear();
 }
 
-void Board::setupInitialPosition()
+void Board::Reset()
 {
     clearBoard();
     for(int y = 0; y < NUM_CHECKER_ROW_FOR_ONE_SIDE; ++y)
@@ -45,6 +45,14 @@ void Board::setupInitialPosition()
             setPiece(x,y,Alliance::RED);
         }
     }
+
+    count23 = 0; // 2-3 piece ending limit 5 moves
+    count45 = 0; // 4-5 piece ending limit 30 moves
+    count67 = 0; // 6-7 piece ending limit 60 moves
+    count15 = 0;
+    _mapRep.clear();
+    _moveLog.clear();
+    _hash = CalcHash();
 }
 
 void Board::clearBoard()
@@ -53,7 +61,7 @@ void Board::clearBoard()
     {
         for(int x = 0; x < BOARD_SIZE; ++x)
         {
-            grid_[y][x] = Tile(x, y);
+            _grid[y][x] = Tile(x, y);
         }
     }
 }
@@ -64,13 +72,75 @@ bool Board::checkCrown(const Board::Piece &piece) const
             || (piece.alliance == Alliance::BLUE && piece.y == BOARD_SIZE - 1);
 }
 
-bool Board::isEndGameScenario() const
+void Board::CalcPieceCount(int &count_red_pieces, int &count_red_kings, int &count_blue_pieces, int &count_blue_kings) const
 {
-    std::vector<Board::Move> redLegalMoves;
-    calcLegalMoves(Alliance::RED, redLegalMoves);
-    std::vector<Board::Move> blueLegalMoves;
-    calcLegalMoves(Alliance::BLUE, blueLegalMoves);
-    return redLegalMoves.empty() || blueLegalMoves.empty();
+    count_red_pieces = 0;
+    count_red_kings = 0;
+    count_blue_pieces = 0;
+    count_blue_kings = 0;
+
+    for(int y = 0; y < BOARD_SIZE; ++y)
+    {
+        for(int x = 0; x < BOARD_SIZE; ++x)
+        {
+            if(_grid[y][x].hasPiece())
+            {
+                Alliance alliance = _grid[y][x].piece.alliance;
+                bool isKing = _grid[y][x].piece.isKing;
+                if(alliance == Alliance::RED)
+                {
+                    if(isKing)
+                        count_red_kings++;
+                    else
+                        count_red_pieces++;
+                }
+                else if(alliance == Alliance::BLUE)
+                {
+                    if(isKing)
+                        count_blue_kings++;
+                    else
+                        count_blue_pieces++;
+                }
+            }
+         }
+    }
+}
+
+
+std::string Board::CalcHash() const
+{
+    std::stringstream ss;
+    for(int y = 0; y < BOARD_SIZE; ++y)
+    {
+        for(int x = 0; x < BOARD_SIZE; ++x)
+        {
+            if(_grid[y][x].hasPiece())
+            {
+                Alliance alliance = _grid[y][x].piece.alliance;
+                bool isKing = _grid[y][x].piece.isKing;
+                if(alliance == Alliance::RED)
+                {
+                    ss << (isKing ? 'R' : 'r');
+                }
+                else if(alliance == Alliance::BLUE)
+                {
+                    ss << (isKing ? 'B' : 'b');
+                }
+            }
+            else
+            {
+                ss << (_grid[y][x].isDark() ? '.' : ' ');
+            }
+        }
+    }
+    return ss.str();
+}
+
+int Board::GetTotalPieces() const
+{
+    int count_red_pieces, count_red_kings, count_blue_pieces, count_blue_kings;
+    CalcPieceCount(count_red_pieces, count_red_kings, count_blue_pieces, count_blue_kings);
+    return count_red_pieces + count_red_kings + count_blue_pieces + count_blue_kings;
 }
 
 bool Board::isValidTile(int x, int y) const
@@ -80,19 +150,19 @@ bool Board::isValidTile(int x, int y) const
 
 bool Board::isTileEmpty(int x, int y) const
 {
-    return isValidTile(x,y) && grid_[y][x].isEmpty();
+    return isValidTile(x,y) && _grid[y][x].isEmpty();
 }
 
 Board::Tile Board::getTile(int x, int y) const
 {
-    return isValidTile(x, y) ? grid_[y][x] : NULL_TILE;
+    return isValidTile(x, y) ? _grid[y][x] : NULL_TILE;
 }
 
 bool Board::setPiece(int x, int y, Board::Alliance alliance, bool isKing)
 {
     if(isValidTile(x,y))
     {
-        grid_[y][x].piece = Piece(x,y,alliance, isKing);
+        _grid[y][x].piece = Piece(x,y,alliance, isKing);
         return true;
     }
     return false;
@@ -107,12 +177,12 @@ bool Board::makeMove(Move move)
     int endX = move[move.size() - 1].end.x;
     int endY = move[move.size() - 1].end.y;
 
-    if(!(isValidTile(startX, startY) && grid_[startY][startX].isDark()
-            && isValidTile(endX, endY) && grid_[endY][endX].isDark()))
+    if(!(isValidTile(startX, startY) && _grid[startY][startX].isDark()
+            && isValidTile(endX, endY) && _grid[endY][endX].isDark()))
         return false;
 
-    grid_[startY][startX].removePiece();
-    grid_[endY][endX].setPiece(movedPiece);
+    _grid[startY][startX].removePiece();
+    _grid[endY][endX].setPiece(movedPiece);
 
     bool coronation = false;
     if(move.size() > 1 || (move.size() == 1 && move.at(0).isJump()))
@@ -121,12 +191,13 @@ bool Board::makeMove(Move move)
         {
             int cx = it->captured.x;
             int cy = it->captured.y;
-            grid_[cy][cx].removePiece();
+            _grid[cy][cx].removePiece();
             int ey = it->end.y;
             if((movedPiece.alliance == Alliance::RED && ey == 0)
                     || (movedPiece.alliance == Alliance::BLUE && ey == BOARD_SIZE - 1))
             {
                 coronation = true;
+                it->IsCoronation = true;
             }
         }
     }
@@ -136,41 +207,180 @@ bool Board::makeMove(Move move)
                 || (movedPiece.alliance == Alliance::BLUE && endY == BOARD_SIZE - 1))
         {
             coronation = true;
+            move[0].IsCoronation = true;
         }
     }
 
     if(coronation)
     {
-        grid_[endY][endX].piece.crown();
+        _grid[endY][endX].piece.crown();
     }
-    moveLog_.push_back(move);
+    _moveLog.push_back(move);
+
+    _hash = CalcHash();
+    _mapRep[_hash]++;
+    /////////////////////////////////////////////////////////////////////
+    int count_red_pieces = 0, count_red_kings = 0, count_blue_pieces = 0, count_blue_kings = 0;
+    CalcPieceCount(count_red_pieces, count_red_kings, count_blue_pieces, count_blue_kings);
+
+    if((count_red_pieces == 0 && count_red_kings >= 3 && count_blue_kings == 1)
+            || (count_blue_pieces == 0 && count_blue_kings >= 3 && count_blue_pieces == 0))
+    {
+        ++count15;
+    }
+
+    int reds_total = count_red_pieces + count_red_kings;
+    int blues_total = count_blue_pieces + count_blue_kings;
+    int total = reds_total + blues_total;
+
+    int balance = (count_red_pieces + 3 * count_red_kings) - (count_blue_pieces + 3 * count_blue_kings);
+    if(total == 2 || total == 3)
+    {
+        count45 = 0;
+        count67 = 0;
+        if(balance != oldBalance)
+        {
+            oldBalance = balance;
+            count23 = 0;
+        }
+        else
+        {
+            ++count23;
+        }
+    }
+    else if(total == 4 || total == 6)
+    {
+        if(balance != oldBalance)
+        {
+            oldBalance = balance;
+            count45 = 0;
+        }
+        else
+        {
+            ++count45;
+        }
+    }
+    else if(total == 6 || total == 7)
+    {
+        count67 = 0;
+        if(balance != oldBalance)
+        {
+            oldBalance = balance;
+            count67 = 0;
+        }
+        else
+        {
+            ++count67;
+        }
+    }
+
     return true;
+}
+
+GameStatus Board::GetGameStatus() const
+{
+    if(!_mapRep.empty() && _mapRep.at(_hash) >= 3)
+    {
+        //std::cout << "Draw by threefold repetition!\n";
+        return GameStatus::DRAW;
+    }
+
+    if(count15 >= 2 * 15)
+    {
+        //std::cout << "No king capture within 15 moves!\n";
+        return GameStatus::DRAW;
+    }
+
+    if(count23 >= 2 * 5)
+    {
+        //std::cout << "No captures or coronations in the last 5 moves for 2-3 piece ending!\n";
+        return GameStatus::DRAW;
+    }
+
+    if(count45 >= 2 * 30)
+    {
+        //std::cout << "No captures or coronations in the last 30 moves for 4-5 piece ending!\n";
+        return GameStatus::DRAW;
+    }
+
+    if(count67 >= 2 * 60)
+    {
+        //std::cout << "No captures or coronations in the last 60 moves for 6-7 piece ending!\n";
+        return GameStatus::DRAW;
+    }
+
+    if(_moveLog.size() > 30)
+    {
+        int count = 0;
+        for(auto it = _moveLog.rbegin(); it != _moveLog.rend(); ++it)
+        {
+            const Move& move = *it;
+            for(const auto& step: move)
+            {
+                if(step.end.piece.isKing)
+                    count++;
+            }
+        }
+
+        if(count >= 30)
+            return GameStatus::DRAW;
+    }
+
+    std::vector<Board::Move> redLegalMoves;
+    calcLegalMoves(Alliance::RED, redLegalMoves);
+    std::vector<Board::Move> blueLegalMoves;
+    calcLegalMoves(Alliance::BLUE, blueLegalMoves);
+    if(redLegalMoves.empty())
+    {
+        return GameStatus::BLUE_WON;
+    }
+
+    if(blueLegalMoves.empty())
+    {
+        return GameStatus::RED_WON;
+    }
+
+    return GameStatus::PLAY;
+}
+
+bool Board::isEndGameScenario() const
+{
+    return GetGameStatus() != GameStatus::PLAY;
 }
 
 void Board::undoLastMove()
 {
-    if(moveLog_.empty()) return;
-    Move move = moveLog_[moveLog_.size() - 1];
+    if(_moveLog.empty()) return;
+
+    _mapRep[_hash]--;
+
+    Move move = _moveLog[_moveLog.size() - 1];
     int startX = move[0].start.x;
     int startY = move[0].start.y;
     Piece movedPiece = move[0].start.piece;
     int endX = move[move.size() - 1].end.x;
     int endY = move[move.size() - 1].end.y;
-    grid_[startY][startX].setPiece(movedPiece);
-    grid_[endY][endX].removePiece();
+    _grid[startY][startX].setPiece(movedPiece);
+    _grid[endY][endX].removePiece();
 
+    bool undoCoronation = false;
     if(move.size() > 1 || (move.size() == 1 && move.at(0).captured.x != -1))
     {
         for(auto it = move.begin(); it != move.end(); ++it)
         {
             int cx = it->captured.x;
             int cy = it->captured.y;
-            grid_[cy][cx].setPiece(it->captured);
+            _grid[cy][cx].setPiece(it->captured);
+            undoCoronation |= it->IsCoronation;
         }
     }
 
-    moveLog_.pop_back();
-    moveLog_.shrink_to_fit();
+    if(undoCoronation)
+        _grid[startY][startX].piece.isKing = false;
+
+    _moveLog.pop_back();
+    _moveLog.shrink_to_fit();
+    _hash = CalcHash();
 }
 
 void Board::calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const
@@ -237,7 +447,7 @@ void Board::calcLegalMoves(Alliance alliance, std::vector<Move> &moves) const
 
 void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) const
 {
-    Tile startTile = grid_[piece.y][piece.x];
+    Tile startTile = _grid[piece.y][piece.x];
     int N = piece.isKing ? BOARD_SIZE - 1 : 2;
 
     for(int dir = 0; dir < 4; ++dir)
@@ -276,8 +486,8 @@ void Board::calcAllJumps(Piece piece, Move move, std::vector<Move> &legalMoves) 
                     Step step = Step(startTile, current, target);
                     Move oldMove = move;
                     move.push_back(step);
-                    Piece p = Piece(current.x, current.y, piece.alliance, false);
-                    if(checkCrown(p) /*|| piece.isKing*/)
+                    Piece p = Piece(current.x, current.y, piece.alliance, piece.isKing);
+                    if(checkCrown(p))
                     {
                         p.crown();
                     }
@@ -314,10 +524,11 @@ int Board::score() const
     std::vector<Move> blueLegalMoves;
     calcLegalMoves(Alliance::BLUE, blueLegalMoves);
 
-    /*if(redLegalMoves.empty())
-        return -10000;
+    const int INF = 10000000;
+    if(redLegalMoves.empty())
+        return -INF;
     if(blueLegalMoves.empty())
-        return 10000;*/
+        return INF;
     score += 10*redLegalMoves.size();
     score -= 10*blueLegalMoves.size();
 
@@ -345,9 +556,15 @@ int Board::score() const
                     else if(x == BOARD_SIZE -1 && y == BOARD_SIZE - 2)
                         score -= currTile.piece.value / 2;
 
-                    //golden piece
-                    if(x == BOARD_SIZE / 2 && y == BOARD_SIZE - 1)
-                        score += 3 * currTile.piece.value;
+                    if(y == BOARD_SIZE - 1)
+                    {
+                        //golden piece
+                        if(x == BOARD_SIZE / 2)
+                            score += 3 * currTile.piece.value;
+                        else
+                            score += currTile.piece.value / 2;
+                    }
+
                 }
                 else if(currTile.piece.alliance == Alliance::BLUE)
                 {
@@ -364,9 +581,14 @@ int Board::score() const
                     else if(x == 0 && y == 1)
                         score += currTile.piece.value / 2;
 
-                    //golden piece
-                    if(x == BOARD_SIZE / 2 - 1 && y == 0)
-                        score -= 3 * currTile.piece.value;
+                    if(y == 0)
+                    {
+                        //golden piece
+                        if(x == BOARD_SIZE / 2)
+                            score -= 3 * currTile.piece.value;
+                        else
+                            score -= currTile.piece.value / 2;
+                    }
                 }
             }
         }
@@ -384,21 +606,21 @@ std::string Board::toString()
         std::string line;
         for(int x = 0; x < BOARD_SIZE; ++x)
         {
-            if(grid_[y][x].hasPiece())
+            if(_grid[y][x].hasPiece())
             {
-                Piece p = grid_[y][x].piece;
+                Piece p = _grid[y][x].piece;
                 if(p.alliance == Alliance::RED)
                 {
-                    line += p.isKing ? "R" : "r";
+                    line += p.isKing ? "[R]" : "[r]";
                 }
                 else if(p.alliance == Alliance::BLUE)
                 {
-                    line += p.isKing ? "B" : "b";
+                    line += p.isKing ? "[B]" : "[b]";
                 }
             }
             else
             {
-                line += "_";
+                line += _grid[y][x].isDark() ?  "[.]" : "[ ]";
             }
         }
         line += "\n";
@@ -423,17 +645,18 @@ std::string Board::moveToAlgebraicNotation(const Board::Move &move)
     {
         for(auto &step: move)
         {
-            notation += " : " + tileToAlgebraicNotation(step.end);
+            notation += ":" + tileToAlgebraicNotation(step.end);
         }
     }
     else
     {
-        notation +=  " - " + tileToAlgebraicNotation(move.at(0).end);
+        notation +=  "-" + tileToAlgebraicNotation(move.at(0).end);
     }
     return notation;
 }
 
 const std::vector<Board::Move> &Board::getMoveLog() const
 {
-    return moveLog_;
+    return _moveLog;
 }
+

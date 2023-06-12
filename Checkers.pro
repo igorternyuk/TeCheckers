@@ -1,6 +1,6 @@
 TEMPLATE = app
 DEFINES += DEBUG
-CONFIG += c++1z
+CONFIG += c++23
 CONFIG -= app_bundle
 CONFIG -= qt
 LIBS += -lglut -lGLU -lGL -lGLEW -lpthread
@@ -9,10 +9,11 @@ SOURCES += \
     game.cpp \
     alphabeta.cpp \
     board.cpp \
-    painter.cpp
+    utils.cpp
 
 HEADERS += \
     game.hpp \
     alphabeta.hpp \
     board.hpp \
-    painter.hpp
+    gamestatus.hpp \
+    utils.hpp
